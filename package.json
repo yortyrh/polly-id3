@@ -1,0 +1,14 @@
+{
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.152",
+    "serverless-plugin-typescript": "^2.1.5",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@aws-sdk/client-polly": "^3.864.0",
+    "@aws-sdk/lib-storage": "^3.864.0",
+    "@smithy/util-retry": "^4.0.7",
+    "aws-lambda": "^1.0.7",
+    "node-id3": "^0.2.9"
+  }
+}

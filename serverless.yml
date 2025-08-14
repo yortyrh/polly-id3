@@ -1,0 +1,51 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: yorty
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: polly-id3
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: polly-id3
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - "polly:*"
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - "sns:PutDataProtectionPolicy"
+        - "sns:Publish"
+        - "sns:DeleteTopic"
+        - "sns:Subscribe"
+        - "sns:ConfirmSubscription"
+      Resource: "arn:aws:sns:us-east-1:545616318384:french-polly-2"
+    - Effect: Allow
+      Action:
+        - "s3:PutObject"
+        - "s3:GetObject"
+        - "s3:DeleteObject"
+        - "s3:ListBucket"
+        - "s3:HeadObject"
+        - "s3:ListObjectsV2"
+      Resource: "arn:aws:s3:::yorty-s3-french/*"
+    - Effect: Allow
+      Action:
+        - "s3:ListBucket"
+      Resource: "arn:aws:s3:::yorty-s3-french"
+
+functions:
+  id3:
+    handler: id3.handler
+    timeout: 900
+    memorySize: 1024
+  id3PollyTaskCompleted:
+    handler: id3.pollyTaskCompleted
+    events:
+      - sns:
+          arn: arn:aws:sns:us-east-1:545616318384:french-polly-2
+  updateId3Metadata:
+    handler: id3.updateId3Metadata
+    timeout: 900
+    memorySize: 1024
