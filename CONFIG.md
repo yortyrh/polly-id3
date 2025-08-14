@@ -19,7 +19,7 @@ This document describes all the environment variables used in the Polly ID3 Tag 
 | Variable | Default Value | Description |
 |----------|---------------|-------------|
 | `S3_BUCKET_NAME` | `yorty-s3-french` | S3 bucket name for storing audio files |
-| `SNS_TOPIC_ARN` | `arn:aws:sns:us-east-1:545616318384:french-polly-2` | SNS topic ARN for task completion notifications |
+| `SNS_TOPIC_ARN` | `arn:aws:sns:us-east-1:545616318384:pollyid3PollyTaskCompleted` | SNS topic ARN for task completion notifications (created automatically) |
 
 ### Retry Configuration
 
@@ -38,7 +38,8 @@ provider:
     OUTPUT_FORMAT: mp3
     VOICE_ID: Lea
     LANGUAGE_CODE: fr-FR
-    SNS_TOPIC_ARN: arn:aws:sns:us-east-1:545616318384:french-polly-2
+    SNS_TOPIC_ARN: 
+      Fn::GetAtt: [PollyTaskCompletedTopic, TopicArn]
     POLLY_ENGINE: generative
     TEXT_TYPE: ssml
     MAX_RETRY_ATTEMPTS: 3
