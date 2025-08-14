@@ -8,6 +8,15 @@ service: polly-id3
 provider:
   name: aws
   runtime: nodejs22.x
+  environment:
+    S3_BUCKET_NAME: yorty-s3-french
+    OUTPUT_FORMAT: mp3
+    VOICE_ID: Lea
+    LANGUAGE_CODE: fr-FR
+    SNS_TOPIC_ARN: arn:aws:sns:us-east-1:545616318384:french-polly-2
+    POLLY_ENGINE: generative
+    TEXT_TYPE: ssml
+    MAX_RETRY_ATTEMPTS: 3
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -20,7 +29,7 @@ provider:
         - "sns:DeleteTopic"
         - "sns:Subscribe"
         - "sns:ConfirmSubscription"
-      Resource: "arn:aws:sns:us-east-1:545616318384:french-polly-2"
+      Resource: "${self:provider.environment.SNS_TOPIC_ARN}"
     - Effect: Allow
       Action:
         - "s3:PutObject"
@@ -29,11 +38,11 @@ provider:
         - "s3:ListBucket"
         - "s3:HeadObject"
         - "s3:ListObjectsV2"
-      Resource: "arn:aws:s3:::yorty-s3-french/*"
+      Resource: "arn:aws:s3:::${self:provider.environment.S3_BUCKET_NAME}/*"
     - Effect: Allow
       Action:
         - "s3:ListBucket"
-      Resource: "arn:aws:s3:::yorty-s3-french"
+      Resource: "arn:aws:s3:::${self:provider.environment.S3_BUCKET_NAME}"
 
 functions:
   id3:
