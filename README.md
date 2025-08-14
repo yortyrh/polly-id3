@@ -117,9 +117,9 @@ Updates ID3 metadata for existing MP3 files in S3.
 
 ## ⚙️ Configuration
 
-### Environment Variables
+The application uses environment variables for all configuration. See [CONFIG.md](CONFIG.md) for detailed documentation of all available options.
 
-The application uses the following configuration:
+### Key Configuration
 
 - **Voice ID**: `Lea` (French neural voice)
 - **Language Code**: `fr-FR` (French)
