@@ -13,7 +13,8 @@ provider:
     OUTPUT_FORMAT: mp3
     VOICE_ID: Lea
     LANGUAGE_CODE: fr-FR
-    SNS_TOPIC_ARN: arn:aws:sns:us-east-1:545616318384:french-polly-2
+    SNS_TOPIC_ARN: 
+      Fn::GetAtt: [PollyTaskCompletedTopic, TopicArn]
     POLLY_ENGINE: generative
     TEXT_TYPE: ssml
     MAX_RETRY_ATTEMPTS: 3
@@ -29,7 +30,8 @@ provider:
         - "sns:DeleteTopic"
         - "sns:Subscribe"
         - "sns:ConfirmSubscription"
-      Resource: "${self:provider.environment.SNS_TOPIC_ARN}"
+      Resource: 
+        Fn::GetAtt: [PollyTaskCompletedTopic, TopicArn]
     - Effect: Allow
       Action:
         - "s3:PutObject"
@@ -53,8 +55,21 @@ functions:
     handler: id3.pollyTaskCompleted
     events:
       - sns:
-          arn: arn:aws:sns:us-east-1:545616318384:french-polly-2
+          topicName: pollyid3PollyTaskCompleted
   updateId3Metadata:
     handler: id3.updateId3Metadata
     timeout: 900
     memorySize: 1024
+
+resources:
+  Resources:
+    PollyTaskCompletedTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: pollyid3PollyTaskCompleted
+        DisplayName: Polly Task Completed Notifications
+        Tags:
+          - Key: Service
+            Value: ${self:service}
+          - Key: Purpose
+            Value: Polly task completion notifications

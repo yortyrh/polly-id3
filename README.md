@@ -46,7 +46,7 @@ serverless deploy
 This will create:
 - Lambda functions for speech synthesis and ID3 processing
 - S3 bucket for audio file storage
-- SNS topic for task completion notifications
+- SNS topic (`pollyid3PollyTaskCompleted`) for task completion notifications
 - IAM roles with necessary permissions
 
 ## 📖 Usage
@@ -125,7 +125,7 @@ The application uses environment variables for all configuration. See [CONFIG.md
 - **Language Code**: `fr-FR` (French)
 - **Output Format**: `mp3`
 - **S3 Bucket**: `yorty-s3-french`
-- **SNS Topic**: `arn:aws:sns:us-east-1:545616318384:french-polly-2`
+- **SNS Topic**: `pollyid3PollyTaskCompleted` (created automatically)
 
 ### AWS Services Used
 
