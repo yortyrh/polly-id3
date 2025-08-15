@@ -11,10 +11,23 @@ on:
 
 env:
   NODE_VERSION: '22'
+  STAGE: ${{ vars.STAGE }}
+  S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
+  SNS_TOPIC_ARN: ${{ vars.SNS_TOPIC_ARN }}
+  VOICE_ID: ${{ vars.VOICE_ID }}
+  LANGUAGE_CODE: ${{ vars.LANGUAGE_CODE }}
+  POLLY_ENGINE: ${{ vars.POLLY_ENGINE }}
+  TEXT_TYPE: ${{ vars.TEXT_TYPE }}
+  MAX_RETRY_ATTEMPTS: ${{ vars.MAX_RETRY_ATTEMPTS }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+
 
 jobs:
   deploy:
-    name: Deploy to ${{ github.event.inputs.environment }}
+    name: Deploy
     runs-on: ubuntu-latest
     
     steps:
@@ -27,22 +40,38 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           
+      - name: Cache node modules
+        id: cache-npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+            
+      - name: Cache dependencies
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-deps-
+            
       - name: Install dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
         run: npm ci
-        
-      - name: Build project
-        run: npm run build
         
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
           
-      - name: Deploy to ${{ github.event.inputs.environment }}
+      - name: Deploy
         run: |
-          echo "Deploying..."
+          echo "Deploying to ${{ env.STAGE }}, with verbose: ${{ github.event.inputs.verbose }}"
           if [ "${{ github.event.inputs.verbose }}" = "true" ]; then
             npm run deploy -- --verbose
           else
@@ -50,26 +79,27 @@ jobs:
           fi
         env:
           # get aws variables from secrets
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ env.AWS_REGION }}
+          SERVERLESS_ACCESS_KEY: ${{ env.SERVERLESS_ACCESS_KEY }}
           
           # get variables from variables
-          STAGE: ${{ vars.STAGE }}
-          S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
-          SNS_TOPIC_ARN: ${{ vars.SNS_TOPIC_ARN }}
-          VOICE_ID: ${{ vars.VOICE_ID }}
-          LANGUAGE_CODE: ${{ vars.LANGUAGE_CODE }}
-          POLLY_ENGINE: ${{ vars.POLLY_ENGINE }}
-          TEXT_TYPE: ${{ vars.TEXT_TYPE }}
-          MAX_RETRY_ATTEMPTS: ${{ vars.MAX_RETRY_ATTEMPTS }}
+          STAGE: ${{ env.STAGE }}
+          S3_BUCKET_NAME: ${{ env.S3_BUCKET_NAME }}
+          SNS_TOPIC_ARN: ${{ env.SNS_TOPIC_ARN }}
+          VOICE_ID: ${{ env.VOICE_ID }}
+          LANGUAGE_CODE: ${{ env.LANGUAGE_CODE }}
+          POLLY_ENGINE: ${{ env.POLLY_ENGINE }}
+          TEXT_TYPE: ${{ env.TEXT_TYPE }}
+          MAX_RETRY_ATTEMPTS: ${{ env.MAX_RETRY_ATTEMPTS }}
           
       - name: Notify deployment status
         if: always()
         run: |
           if [ ${{ job.status }} == 'success' ]; then
-            echo "✅ Deployment to ${{ github.event.inputs.environment }} completed successfully!"
+            echo "✅ Deployment to ${{ env.STAGE }} completed successfully!"
           else
-            echo "❌ Deployment to ${{ github.event.inputs.environment }} failed!"
+            echo "❌ Deployment to ${{ env.STAGE }} failed!"
             exit 1
           fi
