@@ -40,16 +40,32 @@ const createExponentialBackoff = (maxRetryAttempts: number) => {
 /**
  * This function is used to synthesize speech and upload the result to S3.
  * It also uploads the ID3 metadata to S3.
+ * If the override parameter is true, the function will override the existing file.
+ * If the override parameter is false, the function will check if the file already exists and return a 200 status code.
  * @param event - The event object containing the text, key, and ID3 metadata.
  * @returns The response object containing the status code, body, and the task ID.
  */
-export const handler = async (event: { text: string, key: string, id3: unknown }) => {
-  const { text, key, id3 } = event;
+export const handler = async (event: { text: string, key: string, override: boolean, id3: unknown }) => {
+  const s3 = new S3({
+    maxRetries: maxRetryAttempts,
+    retryDelayOptions: {
+      base: 1000
+    },
+  });
+  const s3Service = new S3Service(s3);
+  const { text, key, override = false, id3 } = event;
 
   if (!text) {
     return {
       statusCode: 400,
       body: JSON.stringify('Missing required parameters: text, voiceId, outputFormat, or bucketName'),
+    };
+  }
+
+  if (!key) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify('Missing required parameters: key'),
     };
   }
 
@@ -59,6 +75,19 @@ export const handler = async (event: { text: string, key: string, id3: unknown }
   const s3Client = new S3Client({
     retryStrategy: createExponentialBackoff(maxRetryAttempts),
   });
+
+  if (!override) {
+    const existing = await s3Service.fileExists(bucketName!, key);
+    if (existing) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          message: 'File already exists',
+          key,
+        }),
+      };
+    };
+  }
 
   try {
     const keyPrefix = key.replace(/\.[^.]+$/g, '');
@@ -98,7 +127,7 @@ export const handler = async (event: { text: string, key: string, id3: unknown }
       body: JSON.stringify({
         message: 'Speech synthesis task started',
         taskId: response.SynthesisTask?.TaskId,
-        s3Location,
+        s3Location: s3Location?.replace(`.${response.SynthesisTask?.TaskId}`, ''),
         taskStatus: response.SynthesisTask?.TaskStatus
       }),
     };
@@ -108,14 +137,22 @@ export const handler = async (event: { text: string, key: string, id3: unknown }
   }
 };
 
-// add function to update the id3 metadata in the s3 bucket folder
-// the function should take the s3 bucket name, the folder key
-// it should iterate over the files in the folder and update the id3 metadata
-// found files should be mp3 and json
+/**
+ * This function is used to update the ID3 metadata in the S3 bucket folder.
+ * It iterates over the files in the folder and updates the ID3 metadata.
+ * Found files should be MP3 and JSON.
+ * @param event - The event object containing the S3 bucket name and folder key.
+ * @returns The response object containing the status code, body, and the task ID.
+ */
 export const updateId3Metadata = async (event: { s3Bucket: string, folderKey: string }) => {
   const { s3Bucket, folderKey } = event;
 
-  const s3 = new S3();
+  const s3 = new S3({
+    maxRetries: maxRetryAttempts,
+    retryDelayOptions: {
+      base: 1000
+    },
+  });
   const logger = new Logger();
   const s3Service = new S3Service(s3);
   const id3Processor = new ID3TagProcessor();
@@ -137,9 +174,21 @@ export const updateId3Metadata = async (event: { s3Bucket: string, folderKey: st
   }
 };
 
+/**
+ * This function is used to process the SNS event when the Polly task is completed.
+ * It downloads the MP3 and JSON files, applies the ID3 metadata, and uploads the result back to S3.
+ * It renames the two files to remove the taskId from the filename.
+ * @param event - The event object containing the SNS event.
+ * @returns The response object containing the status code, body, and the task ID.
+ */
 export const pollyTaskCompleted: SNSHandler = async (event: SNSEvent): Promise<void> => {
   // Initialize services inside the handler to allow proper mocking
-  const s3 = new S3();
+  const s3 = new S3({
+    maxRetries: maxRetryAttempts,
+    retryDelayOptions: {
+      base: 1000
+    },
+  });
   const logger = new Logger();
   const s3Service = new S3Service(s3);
   const id3Processor = new ID3TagProcessor();
@@ -158,6 +207,16 @@ export const pollyTaskCompleted: SNSHandler = async (event: SNSEvent): Promise<v
   }
 };
 
+/**
+ * This function is used to process the SNS event when the Polly task is completed.
+ * It downloads the MP3 and JSON files, applies the ID3 metadata, and uploads the result back to S3.
+ * It renames the two files to remove the taskId from the filename.
+ * @param record - The SNS event record.
+ * @param s3Service - The S3 service.
+ * @param id3Processor - The ID3 processor.
+ * @param logger - The logger.
+ * @returns The response object containing the status code, body, and the task ID.
+ */
 async function processSNSEvent(
   record: SNSEventRecord, 
   s3Service: S3Service, 
@@ -232,6 +291,10 @@ async function processSNSEvent(
       originalKey: mp3Key, 
       taggedKey: mp3Key
     });
+
+    // Rename the MP3 and JSON files to remove the .<taskId> from the filename
+    await s3Service.renameFile(s3Bucket, mp3Key, mp3Key.replace(`.${pollyTaskId}`, ''));
+    await s3Service.renameFile(s3Bucket, jsonKey, jsonKey.replace(`.${pollyTaskId}`, ''));
 
   } catch (error) {
     logger.error('Error processing SNS event record', { 

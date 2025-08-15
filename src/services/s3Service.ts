@@ -164,4 +164,34 @@ export class S3Service {
       throw error;
     }
   }
+
+  /**
+   * Renames a file in S3
+   * @param bucketName - The S3 bucket name
+   * @param key - The S3 object key
+   * @param newKey - The new S3 object key
+   * @returns Promise<void>
+   */
+  async renameFile(bucketName: string, key: string, newKey: string): Promise<void> {
+    try {
+      const params: S3.CopyObjectRequest = {
+        Bucket: bucketName,
+        CopySource: `${bucketName}/${key}`,
+        Key: newKey
+      };
+
+      await this.s3.copyObject(params).promise();
+
+      await this.s3.deleteObject({ Bucket: bucketName, Key: key }).promise();
+
+    } catch (error) {
+      this.logger.error('Error renaming file in S3', { 
+        bucketName, 
+        key, 
+        newKey, 
+        error 
+      });
+      throw error;
+    }
+  }
 }
