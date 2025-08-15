@@ -12,19 +12,19 @@ provider:
   name: aws
   runtime: nodejs20.x
   environment:
-    TIMEOUT: 120
-    TIMEOUT_BULK: 900
-    MEMORY_SIZE: 512
-    MEMORY_SIZE_BULK: 1024
+    TIMEOUT: ${env:TIMEOUT, '120'}
+    TIMEOUT_BULK: ${env:TIMEOUT_BULK, '900'}
+    MEMORY_SIZE: ${env:MEMORY_SIZE, '512'}
+    MEMORY_SIZE_BULK: ${env:MEMORY_SIZE_BULK, '1024'}
     S3_BUCKET_NAME: ${env:S3_BUCKET_NAME}
-    OUTPUT_FORMAT: ${env:OUTPUT_FORMAT}
-    VOICE_ID: ${env:VOICE_ID}
-    LANGUAGE_CODE: ${env:LANGUAGE_CODE}
+    OUTPUT_FORMAT: ${env:OUTPUT_FORMAT, 'mp3'}
+    VOICE_ID: ${env:VOICE_ID, 'Lea'}
+    LANGUAGE_CODE: ${env:LANGUAGE_CODE, 'fr-FR'}
     SNS_TOPIC_ARN: 
-      Fn::GetAtt: [PollyTaskCompletedTopic, TopicArn]
-    POLLY_ENGINE: ${env:POLLY_ENGINE}
-    TEXT_TYPE: ${env:TEXT_TYPE}
-    MAX_RETRY_ATTEMPTS: ${env:MAX_RETRY_ATTEMPTS}
+      Fn::GetAtt: [PollyTaskCompletedTopic, TopicArn] # TODO: create a topic in the template
+    POLLY_ENGINE: ${env:POLLY_ENGINE, 'standard'}
+    TEXT_TYPE: ${env:TEXT_TYPE, 'ssml'}
+    MAX_RETRY_ATTEMPTS: ${env:MAX_RETRY_ATTEMPTS, '3'}
   iamRoleStatements:
     - Effect: Allow
       Action:

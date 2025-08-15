@@ -239,10 +239,8 @@ See [`.github/README.md`](.github/README.md) for detailed workflow documentation
 
 For deployments, use the GitHub Actions UI:
 1. Go to **Actions** → **Manual Deploy**
-2. Select environment (dev/staging/production)
-3. Enter S3 bucket name
-4. Choose verbose output if needed
-5. Click **Run workflow**
+2. Choose verbose output if needed
+3. Click **Run workflow**
 
 Alternatively, use the local deploy scripts:
 ```bash

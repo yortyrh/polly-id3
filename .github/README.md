@@ -26,6 +26,181 @@ Set up the following secrets in your GitHub repository:
 - `AWS_SECRET_ACCESS_KEY`: Your AWS secret key
 - `AWS_REGION`: AWS region (default: us-east-1)
 
+## 🔧 Environment Variables Configuration
+
+The application uses environment variables for configuration. You need to set these up for both local development and GitHub Actions deployment.
+
+### **Required Environment Variables**
+
+#### **AWS Polly Configuration**
+```bash
+# Voice and Language Settings
+VOICE_ID=Lea                    # AWS Polly voice ID (default: Lea)
+LANGUAGE_CODE=fr-FR             # Language code (default: fr-FR)
+OUTPUT_FORMAT=mp3               # Audio output format (mp3/ogg_vorbis/pcm)
+POLLY_ENGINE=generative         # Polly engine (standard/neural/generative)
+TEXT_TYPE=ssml                  # Text input type (ssml/text)
+```
+
+#### **AWS Services Configuration**
+```bash
+# S3 Bucket Configuration
+S3_BUCKET_NAME=sample-bucket-dev  # S3 bucket for audio files
+
+# Retry Configuration
+MAX_RETRY_ATTEMPTS=3            # Maximum retry attempts for AWS API calls
+```
+
+#### **Application Settings**
+```bash
+# Timeout and Memory Configuration
+TIMEOUT=120                     # Lambda function timeout in seconds
+TIMEOUT_BULK=900                # Bulk operations timeout
+MEMORY_SIZE=512                 # Lambda memory size in MB
+MEMORY_SIZE_BULK=1024           # Bulk operations memory size
+```
+
+### **Local Development Setup**
+
+1. **Copy the example file:**
+   ```bash
+   cp env.local.example .env.local
+   ```
+
+2. **Configure your local environment:**
+   ```bash
+   # AWS Configuration
+   AWS_REGION=us-east-1
+   AWS_PROFILE=default
+   
+   # Development Environment
+   NODE_ENV=development
+   STAGE=dev
+   
+   # AWS Polly Configuration
+   VOICE_ID=Lea
+   LANGUAGE_CODE=fr-FR
+   OUTPUT_FORMAT=mp3
+   POLLY_ENGINE=generative
+   TEXT_TYPE=ssml
+   MAX_RETRY_ATTEMPTS=3
+   
+   # AWS Services Configuration
+   S3_BUCKET_NAME=sample-bucket-dev
+   
+   # Application Settings
+   TIMEOUT=120
+   TIMEOUT_BULK=900
+   MEMORY_SIZE=512
+   MEMORY_SIZE_BULK=1024
+   ```
+
+### **GitHub Actions Environment Variables**
+
+For GitHub Actions deployment, you can set environment variables in several ways:
+
+#### **Method 1: Repository Secrets**
+Add these as secrets in your GitHub repository:
+- Go to **Settings** → **Secrets and variables** → **Actions**
+- Add each environment variable as a secret
+
+#### **Method 2: Environment-Specific Variables**
+Create environment-specific variable files:
+
+**Development Environment (.env.dev):**
+```bash
+S3_BUCKET_NAME=sample-bucket-dev
+MAX_RETRY_ATTEMPTS=2
+TIMEOUT=120
+MEMORY_SIZE=512
+```
+
+**Staging Environment (.env.staging):**
+```bash
+S3_BUCKET_NAME=sample-bucket-staging
+MAX_RETRY_ATTEMPTS=3
+TIMEOUT=120
+MEMORY_SIZE=512
+```
+
+**Production Environment (.env.production):**
+```bash
+S3_BUCKET_NAME=sample-bucket-prod
+MAX_RETRY_ATTEMPTS=5
+TIMEOUT=300
+MEMORY_SIZE=1024
+```
+
+### **Environment Variable Reference**
+
+| Variable | Default | Description | Required |
+|----------|---------|-------------|----------|
+| `VOICE_ID` | `Lea` | AWS Polly voice ID | No |
+| `LANGUAGE_CODE` | `fr-FR` | Language code for speech synthesis | No |
+| `OUTPUT_FORMAT` | `mp3` | Audio output format | No |
+| `POLLY_ENGINE` | `generative` | Polly engine type | No |
+| `TEXT_TYPE` | `ssml` | Text input type | No |
+| `S3_BUCKET_NAME` | `sample-bucket-dev` | S3 bucket name | **Yes** |
+| `MAX_RETRY_ATTEMPTS` | `3` | Retry attempts for AWS calls | No |
+| `TIMEOUT` | `120` | Lambda timeout in seconds | No |
+| `TIMEOUT_BULK` | `900` | Bulk operations timeout | No |
+| `MEMORY_SIZE` | `512` | Lambda memory size in MB | No |
+| `MEMORY_SIZE_BULK` | `1024` | Bulk operations memory size | No |
+
+### **Configuration Examples**
+
+#### **French Voice Configuration**
+```bash
+VOICE_ID=Lea
+LANGUAGE_CODE=fr-FR
+TEXT_TYPE=ssml
+```
+
+#### **English Voice Configuration**
+```bash
+VOICE_ID=Joanna
+LANGUAGE_CODE=en-US
+TEXT_TYPE=text
+```
+
+#### **High-Performance Configuration**
+```bash
+TIMEOUT=900
+MEMORY_SIZE=1024
+MAX_RETRY_ATTEMPTS=5
+```
+
+#### **Development Configuration**
+```bash
+TIMEOUT=120
+MEMORY_SIZE=512
+MAX_RETRY_ATTEMPTS=2
+S3_BUCKET_NAME=sample-bucket-dev
+```
+
+### **Validation and Testing**
+
+To validate your environment variables:
+
+1. **Check local configuration:**
+   ```bash
+   npm run deploy:local
+   ```
+
+2. **Test with specific environment:**
+   ```bash
+   # Test development
+   STAGE=dev npm run deploy
+   
+   # Test staging
+   STAGE=staging npm run deploy
+   ```
+
+3. **Verify in AWS Console:**
+   - Check Lambda function configuration
+   - Verify S3 bucket access
+   - Test SNS topic permissions
+
 ## 🔐 AWS Permissions Required
 
 To deploy this application, you need to create an IAM user or role with the following permissions. Copy the JSON policies below and attach them to your AWS user/role.
@@ -310,8 +485,6 @@ For production environments, consider these additional security measures:
 2. Select **Manual Deploy** workflow
 3. Click **Run workflow**
 4. Choose environment and options:
-   - **Environment**: dev, staging, or production
-   - **S3 Bucket Name**: Custom S3 bucket name for deployment (required)
    - **Verbose**: Enable for detailed output
 5. Click **Run workflow**
 
@@ -335,7 +508,7 @@ For production environments, consider these additional security measures:
 - **Environment:** `production`
 - **Retry Attempts:** 5
 
-**Note:** S3 bucket names can be customized during manual deployment using the `s3BucketName` input parameter.
+**Note:** S3 bucket names are configured via environment variables in the deployment process.
 
 ## Workflow Steps
 
@@ -365,7 +538,7 @@ For production environments, consider these additional security measures:
    - Check for TypeScript compilation errors
 
 4. **S3 Bucket Issues:**
-   - Verify the S3 bucket name is correct
+   - Verify the S3 bucket name is configured in environment variables
    - Ensure the bucket exists and is accessible
    - Check IAM permissions for S3 access
 
@@ -382,5 +555,5 @@ For production environments, consider these additional security measures:
 - Workflows run in isolated environments
 - No sensitive data is logged in workflow outputs
 - All deployments use least-privilege IAM roles
-- S3 bucket names are configurable for different environments
+- S3 bucket names are configured via environment variables
 - Cross-platform deployment using Node.js scripts
