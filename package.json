@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "deploy:local": "node --env-file=.env.local scripts/deploy.js",
+    "deploy": "node scripts/deploy.js",
+    "remove": "npx serverless remove --stage dev"
+  },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.152",
     "serverless-plugin-typescript": "^2.1.5",
@@ -10,5 +15,29 @@
     "@smithy/util-retry": "^4.0.7",
     "aws-lambda": "^1.0.7",
     "node-id3": "^0.2.9"
+  },
+  "name": "polly-id3",
+  "version": "1.0.0",
+  "description": "A serverless AWS application that automatically generates speech audio using Amazon Polly and applies ID3 metadata tags to the resulting MP3 files. Perfect for n8n workflow automation and text-to-speech integration.",
+  "author": "Yorty Ruiz Hernandez <yorty.ruiz@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yortyrh/polly-id3.git"
+  },
+  "keywords": [
+    "aws",
+    "polly",
+    "id3",
+    "serverless",
+    "text-to-speech",
+    "mp3",
+    "metadata",
+    "n8n",
+    "workflow-automation",
+    "integration"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

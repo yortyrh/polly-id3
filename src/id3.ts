@@ -1,4 +1,4 @@
-import { SNSHandler, SNSEvent, SNSEventRecord, S3Event } from 'aws-lambda';
+import { SNSHandler, SNSEvent, SNSEventRecord } from 'aws-lambda';
 import { S3 } from 'aws-sdk';
 import { ID3TagProcessor } from './services/id3TagProcessor';
 import { S3Service } from './services/s3Service';
@@ -16,14 +16,26 @@ interface PollyTaskCompletedMessage {
 }
 
 // Environment variables
-const bucketName = process.env.S3_BUCKET_NAME || 'yorty-s3-french';
+const bucketName = process.env.S3_BUCKET_NAME;
 const outputFormat = (process.env.OUTPUT_FORMAT || 'mp3') as 'mp3' | 'ogg_vorbis' | 'pcm';
 const voiceId = (process.env.VOICE_ID || 'Lea') as VoiceId;
-const languageCode = (process.env.LANGUAGE_CODE || 'fr-FR') as LanguageCode;
-const snsTopicArn = process.env.SNS_TOPIC_ARN || 'arn:aws:sns:us-east-1:545616318384:french-polly-2';
+const languageCode = (process.env.LANGUAGE_CODE) as LanguageCode;
+const snsTopicArn = process.env.SNS_TOPIC_ARN;
 const pollyEngine = (process.env.POLLY_ENGINE || 'generative') as 'standard' | 'neural' | 'generative';
 const textType = (process.env.TEXT_TYPE || 'ssml') as 'ssml' | 'text';
 const maxRetryAttempts = parseInt(process.env.MAX_RETRY_ATTEMPTS || '3', 10);
+
+/**
+ * Creates an exponential backoff retry strategy for the Polly client.
+ * @param maxRetryAttempts - The maximum number of retry attempts.
+ * @returns The retry strategy.
+ */
+const createExponentialBackoff = (maxRetryAttempts: number) => {
+  return new ConfiguredRetryStrategy(
+    maxRetryAttempts, // max attempts.
+    (attempt: number) => attempt * 1000 * (2 ** attempt) // backoff function.
+  );
+};
 
 /**
  * This function is used to synthesize speech and upload the result to S3.
@@ -42,16 +54,10 @@ export const handler = async (event: { text: string, key: string, id3: unknown }
   }
 
   const pollyClient = new PollyClient({
-    retryStrategy: new ConfiguredRetryStrategy(
-      maxRetryAttempts, // max attempts.
-      (attempt: number) => attempt * 1000 * (2 ** attempt) // backoff function.
-    ),
+    retryStrategy: createExponentialBackoff(maxRetryAttempts),
   });
   const s3Client = new S3Client({
-    retryStrategy: new ConfiguredRetryStrategy(
-      maxRetryAttempts, // max attempts.
-      (attempt: number) => attempt * 1000 * (2 ** attempt) // backoff function.
-    ),
+    retryStrategy: createExponentialBackoff(maxRetryAttempts),
   });
 
   try {

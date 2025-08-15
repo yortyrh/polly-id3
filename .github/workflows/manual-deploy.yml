@@ -1,0 +1,75 @@
+name: Manual Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      verbose:
+        description: 'Enable verbose output'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build project
+        run: npm run build
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+          
+      - name: Deploy to ${{ github.event.inputs.environment }}
+        run: |
+          echo "Deploying..."
+          if [ "${{ github.event.inputs.verbose }}" = "true" ]; then
+            npm run deploy -- --verbose
+          else
+            npm run deploy
+          fi
+        env:
+          # get aws variables from secrets
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          
+          # get variables from variables
+          STAGE: ${{ vars.STAGE }}
+          S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
+          SNS_TOPIC_ARN: ${{ vars.SNS_TOPIC_ARN }}
+          VOICE_ID: ${{ vars.VOICE_ID }}
+          LANGUAGE_CODE: ${{ vars.LANGUAGE_CODE }}
+          POLLY_ENGINE: ${{ vars.POLLY_ENGINE }}
+          TEXT_TYPE: ${{ vars.TEXT_TYPE }}
+          MAX_RETRY_ATTEMPTS: ${{ vars.MAX_RETRY_ATTEMPTS }}
+          
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ Deployment to ${{ github.event.inputs.environment }} completed successfully!"
+          else
+            echo "❌ Deployment to ${{ github.event.inputs.environment }} failed!"
+            exit 1
+          fi

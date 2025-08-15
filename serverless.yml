@@ -5,19 +5,26 @@ app: polly-id3
 # "service" is the name of this project. This will also be added to your AWS resource names.
 service: polly-id3
 
+plugins:
+  - serverless-plugin-typescript
+
 provider:
   name: aws
-  runtime: nodejs22.x
+  runtime: nodejs20.x
   environment:
-    S3_BUCKET_NAME: yorty-s3-french
-    OUTPUT_FORMAT: mp3
-    VOICE_ID: Lea
-    LANGUAGE_CODE: fr-FR
+    TIMEOUT: 120
+    TIMEOUT_BULK: 900
+    MEMORY_SIZE: 512
+    MEMORY_SIZE_BULK: 1024
+    S3_BUCKET_NAME: ${env:S3_BUCKET_NAME}
+    OUTPUT_FORMAT: ${env:OUTPUT_FORMAT}
+    VOICE_ID: ${env:VOICE_ID}
+    LANGUAGE_CODE: ${env:LANGUAGE_CODE}
     SNS_TOPIC_ARN: 
       Fn::GetAtt: [PollyTaskCompletedTopic, TopicArn]
-    POLLY_ENGINE: generative
-    TEXT_TYPE: ssml
-    MAX_RETRY_ATTEMPTS: 3
+    POLLY_ENGINE: ${env:POLLY_ENGINE}
+    TEXT_TYPE: ${env:TEXT_TYPE}
+    MAX_RETRY_ATTEMPTS: ${env:MAX_RETRY_ATTEMPTS}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -30,8 +37,7 @@ provider:
         - "sns:DeleteTopic"
         - "sns:Subscribe"
         - "sns:ConfirmSubscription"
-      Resource: 
-        Fn::GetAtt: [PollyTaskCompletedTopic, TopicArn]
+      Resource: "${self:provider.environment.SNS_TOPIC_ARN}"
     - Effect: Allow
       Action:
         - "s3:PutObject"
@@ -48,28 +54,26 @@ provider:
 
 functions:
   id3:
-    handler: id3.handler
-    timeout: 900
-    memorySize: 1024
+    handler: src/id3.handler
+    timeout: ${self:provider.environment.TIMEOUT}
+    memorySize: ${self:provider.environment.MEMORY_SIZE}
   id3PollyTaskCompleted:
-    handler: id3.pollyTaskCompleted
+    handler: src/id3.pollyTaskCompleted
+    timeout: ${self:provider.environment.TIMEOUT}
+    memorySize: ${self:provider.environment.MEMORY_SIZE}
     events:
       - sns:
-          topicName: pollyid3PollyTaskCompleted
+          arn: !Ref PollyTaskCompletedTopic
+          topicName: PollyTaskCompletedTopic
   updateId3Metadata:
-    handler: id3.updateId3Metadata
-    timeout: 900
-    memorySize: 1024
+    handler: src/id3.updateId3Metadata
+    timeout: ${self:provider.environment.TIMEOUT_BULK}
+    memorySize: ${self:provider.environment.MEMORY_SIZE_BULK}
 
 resources:
   Resources:
     PollyTaskCompletedTopic:
       Type: AWS::SNS::Topic
       Properties:
-        TopicName: pollyid3PollyTaskCompleted
-        DisplayName: Polly Task Completed Notifications
-        Tags:
-          - Key: Service
-            Value: ${self:service}
-          - Key: Purpose
-            Value: Polly task completion notifications
+        TopicName: PollyTaskCompletedTopic
+
