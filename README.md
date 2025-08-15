@@ -177,6 +177,29 @@ The application uses environment variables for all configuration. See [CONFIG.md
 - **S3 Bucket**: Configurable via `S3_BUCKET_NAME` environment variable
 - **SNS Topic**: `PollyTaskCompletedTopic` (created automatically)
 
+### Serverless Framework Access Key
+
+For CI/CD deployments using GitHub Actions, you need to configure the `SERVERLESS_ACCESS_KEY` environment variable. This key is required for the Serverless Framework to authenticate with the Serverless Dashboard.
+
+**Setup Instructions:**
+
+1. **Get your Serverless Access Key:**
+   - Log in to your [Serverless Dashboard](https://app.serverless.com)
+   - Navigate to your profile settings
+   - Generate a new access key
+
+2. **Add to GitHub Secrets:**
+   - Go to your repository → Settings → Secrets and variables → Actions
+   - Create a new repository secret named `SERVERLESS_ACCESS_KEY`
+   - Set the value to your Serverless access key
+
+3. **For Local Development:**
+   ```bash
+   export SERVERLESS_ACCESS_KEY=your_access_key_here
+   ```
+
+For more information about running Serverless Framework in your own CI/CD pipeline, see the [official documentation](https://www.serverless.com/framework/docs/guides/dashboard/cicd/running-in-your-own-cicd).
+
 ### AWS Services Used
 
 - **AWS Polly**: Text-to-speech synthesis
