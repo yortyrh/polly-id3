@@ -293,8 +293,10 @@ async function processSNSEvent(
     });
 
     // Rename the MP3 and JSON files to remove the .<taskId> from the filename
-    await s3Service.renameFile(s3Bucket, mp3Key, mp3Key.replace(`.${pollyTaskId}`, ''));
-    await s3Service.renameFile(s3Bucket, jsonKey, jsonKey.replace(`.${pollyTaskId}`, ''));
+    await Promise.all([
+      s3Service.renameFile(s3Bucket, mp3Key, mp3Key.replace(`.${pollyTaskId}`, '')),
+      s3Service.renameFile(s3Bucket, jsonKey, jsonKey.replace(`.${pollyTaskId}`, ''))
+    ]);
 
   } catch (error) {
     logger.error('Error processing SNS event record', { 
