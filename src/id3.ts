@@ -3,11 +3,11 @@ import { S3 } from 'aws-sdk';
 import { ID3TagProcessor } from './services/id3TagProcessor';
 import { S3Service } from './services/s3Service';
 import { Logger } from './services/logger';
-import { PollyClient, StartSpeechSynthesisTaskCommand, VoiceId, LanguageCode } from "@aws-sdk/client-polly";
-import { S3Client } from "@aws-sdk/client-s3";
+import { StartSpeechSynthesisTaskCommand, VoiceId, LanguageCode } from "@aws-sdk/client-polly";
 import { Upload } from "@aws-sdk/lib-storage";
-import { ConfiguredRetryStrategy } from "@smithy/util-retry";
+import { Factory } from './services/Factory';
 
+const factory = new Factory();
 interface PollyTaskCompletedMessage {
   taskId: string;
   taskStatus: string;
@@ -26,25 +26,16 @@ const textType = (process.env.TEXT_TYPE || 'ssml') as 'ssml' | 'text';
 const maxRetryAttempts = parseInt(process.env.MAX_RETRY_ATTEMPTS || '3', 10);
 
 /**
- * Creates an exponential backoff retry strategy for the Polly client.
- * @param maxRetryAttempts - The maximum number of retry attempts.
- * @returns The retry strategy.
- */
-const createExponentialBackoff = (maxRetryAttempts: number) => {
-  return new ConfiguredRetryStrategy(
-    maxRetryAttempts, // max attempts.
-    (attempt: number) => attempt * 1000 * (2 ** attempt) // backoff function.
-  );
-};
-
-/**
  * This function is used to synthesize speech and upload the result to S3.
  * It also uploads the ID3 metadata to S3.
+ * If the override parameter is true, the function will override the existing file.
+ * If the override parameter is false, the function will check if the file already exists and return a 200 status code.
  * @param event - The event object containing the text, key, and ID3 metadata.
  * @returns The response object containing the status code, body, and the task ID.
  */
-export const handler = async (event: { text: string, key: string, id3: unknown }) => {
-  const { text, key, id3 } = event;
+export const handler = async (event: { text: string, key: string, override: boolean, id3: unknown }) => {
+  const s3Service = factory.getOrCreateS3Service();
+  const { text, key, override = false, id3 } = event;
 
   if (!text) {
     return {
@@ -53,12 +44,27 @@ export const handler = async (event: { text: string, key: string, id3: unknown }
     };
   }
 
-  const pollyClient = new PollyClient({
-    retryStrategy: createExponentialBackoff(maxRetryAttempts),
-  });
-  const s3Client = new S3Client({
-    retryStrategy: createExponentialBackoff(maxRetryAttempts),
-  });
+  if (!key) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify('Missing required parameters: key'),
+    };
+  }
+
+  const pollyClient = factory.getOrCreatePollyClient();
+
+  if (!override) {
+    const existing = await s3Service.fileExists(bucketName!, key);
+    if (existing) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          message: 'File already exists',
+          key,
+        }),
+      };
+    };
+  }
 
   try {
     const keyPrefix = key.replace(/\.[^.]+$/g, '');
@@ -82,23 +88,14 @@ export const handler = async (event: { text: string, key: string, id3: unknown }
     console.log("Error synthesizing speech or uploading to S3:", taskId3Key, taskKeyPrefix);
     // upload JSON file to S3 with the object inside id3 if it exists
     if (id3) {
-      const upload = new Upload({
-        client: s3Client,
-        params: {
-          Bucket: bucketName,
-          Key: taskId3Key,
-          Body: JSON.stringify(id3),
-          ContentType: 'application/json',
-        },
-      });
-      await upload.done();
+      await s3Service.uploadFile(bucketName!, taskId3Key, Buffer.from(JSON.stringify(id3)), 'application/json');
     }
     return {
       statusCode: 200,
       body: JSON.stringify({
         message: 'Speech synthesis task started',
         taskId: response.SynthesisTask?.TaskId,
-        s3Location,
+        s3Location: s3Location?.replace(`.${response.SynthesisTask?.TaskId}`, ''),
         taskStatus: response.SynthesisTask?.TaskStatus
       }),
     };
@@ -108,28 +105,32 @@ export const handler = async (event: { text: string, key: string, id3: unknown }
   }
 };
 
-// add function to update the id3 metadata in the s3 bucket folder
-// the function should take the s3 bucket name, the folder key
-// it should iterate over the files in the folder and update the id3 metadata
-// found files should be mp3 and json
+/**
+ * This function is used to update the ID3 metadata in the S3 bucket folder.
+ * It iterates over the files in the folder and updates the ID3 metadata.
+ * Found files should be MP3 and JSON.
+ * @param event - The event object containing the S3 bucket name and folder key.
+ * @returns The response object containing the status code, body, and the task ID.
+ */
 export const updateId3Metadata = async (event: { s3Bucket: string, folderKey: string }) => {
   const { s3Bucket, folderKey } = event;
 
-  const s3 = new S3();
-  const logger = new Logger();
-  const s3Service = new S3Service(s3);
-  const id3Processor = new ID3TagProcessor();
+  const s3Service = factory.getOrCreateS3Service();
+  const logger = factory.createLogger();
+  const id3Processor = factory.getOrCreateId3TagProcessor();
 
   const files = await s3Service.listMp3Files(s3Bucket, folderKey);
   logger.info('Found files', { files });
   for (const file of files) {
-    if (!s3Service.fileExists(s3Bucket, file.replace('.mp3', '.json'))) {
+    const jsonFile = file.replace('.mp3', '.json');
+    const jsonFileExists = await s3Service.fileExists(s3Bucket, jsonFile);
+    if (!jsonFileExists) {
       logger.warn('JSON file does not exist', { file });
       continue;
     }
     const [mp3Buffer, jsonData] = await Promise.all([
       s3Service.downloadFile(s3Bucket, file),
-      s3Service.downloadFile(s3Bucket, file.replace('.mp3', '.json'))
+      s3Service.downloadFile(s3Bucket, jsonFile)
     ]);
     const metadata = JSON.parse(jsonData.toString());
     const taggedMp3Buffer = await id3Processor.applyTags(mp3Buffer, metadata);
@@ -137,12 +138,18 @@ export const updateId3Metadata = async (event: { s3Bucket: string, folderKey: st
   }
 };
 
+/**
+ * This function is used to process the SNS event when the Polly task is completed.
+ * It downloads the MP3 and JSON files, applies the ID3 metadata, and uploads the result back to S3.
+ * It renames the two files to remove the taskId from the filename.
+ * @param event - The event object containing the SNS event.
+ * @returns The response object containing the status code, body, and the task ID.
+ */
 export const pollyTaskCompleted: SNSHandler = async (event: SNSEvent): Promise<void> => {
   // Initialize services inside the handler to allow proper mocking
-  const s3 = new S3();
-  const logger = new Logger();
-  const s3Service = new S3Service(s3);
-  const id3Processor = new ID3TagProcessor();
+  const s3Service = factory.getOrCreateS3Service();
+  const logger = factory.createLogger();
+  const id3Processor = factory.getOrCreateId3TagProcessor();
 
   try {
     logger.info('Processing SNS event', { recordCount: event.Records.length });
@@ -158,6 +165,16 @@ export const pollyTaskCompleted: SNSHandler = async (event: SNSEvent): Promise<v
   }
 };
 
+/**
+ * This function is used to process the SNS event when the Polly task is completed.
+ * It downloads the MP3 and JSON files, applies the ID3 metadata, and uploads the result back to S3.
+ * It renames the two files to remove the taskId from the filename.
+ * @param record - The SNS event record.
+ * @param s3Service - The S3 service.
+ * @param id3Processor - The ID3 processor.
+ * @param logger - The logger.
+ * @returns The response object containing the status code, body, and the task ID.
+ */
 async function processSNSEvent(
   record: SNSEventRecord, 
   s3Service: S3Service, 
@@ -232,6 +249,12 @@ async function processSNSEvent(
       originalKey: mp3Key, 
       taggedKey: mp3Key
     });
+
+    // Rename the MP3 and JSON files to remove the .<taskId> from the filename
+    await Promise.all([
+      s3Service.renameFile(s3Bucket, mp3Key, mp3Key.replace(`.${pollyTaskId}`, '')),
+      s3Service.renameFile(s3Bucket, jsonKey, jsonKey.replace(`.${pollyTaskId}`, ''))
+    ]);
 
   } catch (error) {
     logger.error('Error processing SNS event record', { 
