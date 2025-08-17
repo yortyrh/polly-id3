@@ -10,7 +10,7 @@ on:
         type: boolean
 
 env:
-  NODE_VERSION: '22'
+  NODE_VERSION: '20'
   STAGE: ${{ vars.STAGE }}
   S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
   SNS_TOPIC_ARN: ${{ vars.SNS_TOPIC_ARN }}
