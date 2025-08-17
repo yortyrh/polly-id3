@@ -14,11 +14,26 @@ export interface ID3Metadata {
   albumArtist?: string;
   disc?: string | number;
   bpm?: string | number;
+  picture?: string;
   [key: string]: any;
 }
 
 export class ID3TagProcessor {
   private logger = new Logger();
+
+  private  async imageUrlToBuffer(imageUrl: string): Promise<{ mime: string, imageBuffer: Buffer }> {
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.statusText}`);
+    }
+    const mime = response.headers.get('content-type')!;
+    // check if it is an image
+    if (!mime.startsWith('image/')) {
+      throw new Error(`Invalid image URL: ${imageUrl} - ${mime}`);
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    return { mime, imageBuffer: Buffer.from(arrayBuffer) };
+  }
 
   /**
    * Applies ID3 tags to an MP3 buffer
@@ -31,7 +46,7 @@ export class ID3TagProcessor {
       this.logger.info('Applying ID3 tags', { metadata });
 
       // Convert metadata to NodeID3 format
-      const id3Tags = this.convertToID3Format(metadata);
+      const id3Tags = await this.convertToID3Format(metadata);
 
       // Apply tags to the MP3 buffer
       const taggedBuffer = NodeID3.write(id3Tags, mp3Buffer);
@@ -54,7 +69,7 @@ export class ID3TagProcessor {
    * @param metadata - Generic metadata object
    * @returns NodeID3 compatible tags object
    */
-  private convertToID3Format(metadata: ID3Metadata): NodeID3.Tags {
+  private async convertToID3Format(metadata: ID3Metadata): Promise<NodeID3.Tags> {
     const tags: NodeID3.Tags = {};
 
     // Map common fields
@@ -69,6 +84,21 @@ export class ID3TagProcessor {
     if (metadata.albumArtist) tags.performerInfo = metadata.albumArtist;
     if (metadata.bpm) tags.bpm = metadata.bpm.toString();
     if (metadata.track) tags.trackNumber = metadata.track.toString();
+    if (metadata.picture) {
+      try {
+        const { mime, imageBuffer } = await this.imageUrlToBuffer(metadata.picture);
+        tags.image = {
+          mime,
+          type: {
+            id: NodeID3.TagConstants.AttachedPicture.PictureType.FRONT_COVER
+          }, // See https://en.wikipedia.org/wiki/ID3#ID3v2_embedded_image_extension
+          description: 'Cover',
+          imageBuffer,
+        };
+      } catch (error) {
+        this.logger.error("Error converting image URL to Buffer", error);
+      }
+    };
 
     // Handle custom fields
     Object.keys(metadata).forEach(key => {
@@ -91,8 +121,9 @@ export class ID3TagProcessor {
    */
   private isStandardField(fieldName: string): boolean {
     const standardFields = [
-      'title', 'artist', 'album', 'year', 'track', 'genre', 'trackNumber',
-      'comment', 'lyrics', 'composer', 'albumArtist', 'disc', 'bpm'
+      'title', 'artist', 'album', 'year', 'track', 'genre',
+      'comment', 'lyrics', 'composer', 'albumArtist', 'bpm', 
+      'picture',
     ];
     return standardFields.includes(fieldName.toLowerCase());
   }

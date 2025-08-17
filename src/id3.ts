@@ -1,10 +1,8 @@
 import { SNSHandler, SNSEvent, SNSEventRecord } from 'aws-lambda';
-import { S3 } from 'aws-sdk';
-import { ID3TagProcessor } from './services/id3TagProcessor';
+import { ID3Metadata, ID3TagProcessor } from './services/id3TagProcessor';
 import { S3Service } from './services/s3Service';
 import { Logger } from './services/logger';
-import { StartSpeechSynthesisTaskCommand, VoiceId, LanguageCode } from "@aws-sdk/client-polly";
-import { Upload } from "@aws-sdk/lib-storage";
+import { StartSpeechSynthesisTaskCommand, VoiceId, LanguageCode, Engine, TextType } from "@aws-sdk/client-polly";
 import { Factory } from './services/Factory';
 
 const factory = new Factory();
@@ -15,15 +13,100 @@ interface PollyTaskCompletedMessage {
   outputUri: string;
 }
 
+/**
+ * .ogg or .oga use ogg_vorbis
+ * .mp3 use mp3
+ * .pcm use pcm
+ */
+const fileNameToPollyFormat = (fileName: string): 'mp3' | 'ogg_vorbis' | 'pcm' | null => {
+  if (fileName.endsWith('.ogg') || fileName.endsWith('.oga')) {
+    return 'ogg_vorbis';
+  }
+  if (fileName.endsWith('.wav') || fileName.endsWith('.aiff')) {
+    return 'pcm';
+  }
+  if (fileName.endsWith('.mp3')) {
+    return 'mp3';
+  }
+  return 'mp3';
+}
+
+/**
+ * This function is used to determine the text type of the text.
+ * If the text starts with <speak>, return SSML.
+ * If the text does not start with <speak>, return TEXT.
+ * If the defaultTextType is provided, return the defaultTextType.
+ * @param text - The text to determine the text type of.
+ * @param defaultTextType - The default text type to return if the text does not start with <speak>.
+ * @returns The text type.
+ */
+const textToTextType = (text: string, forceTextType?: TextType): TextType => {
+  if (forceTextType) {
+    return forceTextType;
+  }
+  if (text.trim().match(/<speak[^>]*>/)) {
+    return TextType.SSML;
+  }
+  return TextType.TEXT;
+}
+
 // Environment variables
 const bucketName = process.env.S3_BUCKET_NAME;
-const outputFormat = (process.env.OUTPUT_FORMAT || 'mp3') as 'mp3' | 'ogg_vorbis' | 'pcm';
-const voiceId = (process.env.VOICE_ID || 'Lea') as VoiceId;
-const languageCode = (process.env.LANGUAGE_CODE) as LanguageCode;
+const defaultVoiceId = (process.env.VOICE_ID || VoiceId.Lea) as VoiceId;
+const defaultLanguageCode = (process.env.LANGUAGE_CODE || LanguageCode.en_US) as LanguageCode;
 const snsTopicArn = process.env.SNS_TOPIC_ARN;
-const pollyEngine = (process.env.POLLY_ENGINE || 'generative') as 'standard' | 'neural' | 'generative';
-const textType = (process.env.TEXT_TYPE || 'ssml') as 'ssml' | 'text';
-const maxRetryAttempts = parseInt(process.env.MAX_RETRY_ATTEMPTS || '3', 10);
+const defaultEngine = (process.env.POLLY_ENGINE || Engine.GENERATIVE) as Engine;
+
+/**
+ * This type is used to define the event object for the handler function.
+ * @param text - The text to synthesize.
+ * @param key - The key of the file to synthesize.
+ * @param languageCode - The language code to use for the synthesis.
+ * @param voiceId - The voice ID to use for the synthesis.
+ * @param engine - The engine to use for the synthesis.
+ * @param textType - The text type to use for the synthesis. If not provided, the function will determine the text type based on the text.
+ * @param override - Whether to override the existing file, default is false.
+ * @param id3 - The ID3 metadata to use for the synthesis.
+ */
+type HandlerEvent = {
+  text: string;
+  key: string;
+  languageCode?: LanguageCode;
+  voiceId?: VoiceId;
+  engine?: Engine;
+  textType?: TextType;
+  override?: boolean;
+  id3?: ID3Metadata;
+}
+
+// Example event:
+// convert to /* */ format
+/*
+{
+   "text": "Hello, world!",
+   "key": "polly/test-1.mp3",
+   "languageCode": "en-US",
+   "voiceId": "Matthew",
+   "engine": "standard",
+   "override": false,
+   "id3": {
+     "title": "Test 1",
+     "artist": "Test Artist 1",
+     "album": "Test Album 1",
+     "year": "2025",
+     "comment": "Test Comment 1",
+     "genre": "Test Genre 1",
+     "track": "1",
+     "disc": "1",
+     "picture": "https://dummyimage.com/600x400/000/fff.png"
+   }
+}
+*/
+
+type HandlerResponse = {
+  statusCode: number;
+  body: string;
+}
 
 /**
  * This function is used to synthesize speech and upload the result to S3.
@@ -33,9 +116,18 @@ const maxRetryAttempts = parseInt(process.env.MAX_RETRY_ATTEMPTS || '3', 10);
  * @param event - The event object containing the text, key, and ID3 metadata.
  * @returns The response object containing the status code, body, and the task ID.
  */
-export const handler = async (event: { text: string, key: string, override: boolean, id3: unknown }) => {
+export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => {
   const s3Service = factory.getOrCreateS3Service();
-  const { text, key, override = false, id3 } = event;
+  const {
+    text,
+    key,
+    languageCode = defaultLanguageCode,
+    voiceId = defaultVoiceId,
+    engine = defaultEngine,
+    textType,
+    override = false,
+    id3 = {} as ID3Metadata,
+  } = event;
 
   if (!text) {
     return {
@@ -48,6 +140,14 @@ export const handler = async (event: { text: string, key: string, override: bool
     return {
       statusCode: 400,
       body: JSON.stringify('Missing required parameters: key'),
+    };
+  }
+
+  const pollyFormat = fileNameToPollyFormat(key);
+  if (!pollyFormat) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify('Invalid file extension: ' + key),
     };
   }
 
@@ -71,10 +171,10 @@ export const handler = async (event: { text: string, key: string, override: bool
     const synthesizeSpeechCommand = new StartSpeechSynthesisTaskCommand({
       Text: text,
       VoiceId: voiceId,
-      OutputFormat: outputFormat,
+      OutputFormat: pollyFormat,
       LanguageCode: languageCode,
-      Engine: pollyEngine,
-      TextType: textType,
+      Engine: engine,
+      TextType: textToTextType(text, textType),
       SnsTopicArn: snsTopicArn,
       OutputS3BucketName: bucketName,
       OutputS3KeyPrefix: keyPrefix
