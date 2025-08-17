@@ -10,7 +10,6 @@ This document describes all the environment variables used in the Polly ID3 Tag 
 |----------|---------------|-------------|------|
 | `VOICE_ID` | `Lea` | AWS Polly voice ID to use for speech synthesis | `VoiceId` |
 | `LANGUAGE_CODE` | `fr-FR` | Language code for speech synthesis | `LanguageCode` |
-| `OUTPUT_FORMAT` | `mp3` | Output format for synthesized speech | `'mp3' \| 'ogg_vorbis' \| 'pcm'` |
 | `POLLY_ENGINE` | `standard` | Polly engine type | `'standard' \| 'neural' \| 'generative'` |
 | `TEXT_TYPE` | `ssml` | Type of text input | `'ssml' \| 'text'` |
 
@@ -55,7 +54,6 @@ provider:
     MEMORY_SIZE: ${env:MEMORY_SIZE, '512'}
     MEMORY_SIZE_BULK: ${env:MEMORY_SIZE_BULK, '1024'}
     S3_BUCKET_NAME: ${env:S3_BUCKET_NAME}
-    OUTPUT_FORMAT: ${env:OUTPUT_FORMAT, 'mp3'}
     VOICE_ID: ${env:VOICE_ID, 'Lea'}
     LANGUAGE_CODE: ${env:LANGUAGE_CODE, 'fr-FR'}
     SNS_TOPIC_ARN: 
@@ -188,11 +186,10 @@ To customize the application for different environments or use cases:
 
 1. **Change Voice**: Update `VOICE_ID` to use a different Polly voice
 2. **Change Language**: Update `LANGUAGE_CODE` for different languages
-3. **Change Output Format**: Update `OUTPUT_FORMAT` for different audio formats
-4. **Change S3 Bucket**: Update `S3_BUCKET_NAME` for different storage locations
-5. **Change Retry Strategy**: Update `MAX_RETRY_ATTEMPTS` for different reliability requirements
-6. **Change Lambda Settings**: Update `TIMEOUT`, `MEMORY_SIZE` for performance tuning
-7. **Change Polly Engine**: Update `POLLY_ENGINE` for different voice quality
+3. **Change S3 Bucket**: Update `S3_BUCKET_NAME` for different storage locations
+4. **Change Retry Strategy**: Update `MAX_RETRY_ATTEMPTS` for different reliability requirements
+5. **Change Lambda Settings**: Update `TIMEOUT`, `MEMORY_SIZE` for performance tuning
+6. **Change Polly Engine**: Update `POLLY_ENGINE` for different voice quality
 
 ## Environment-Specific Configuration
 

@@ -134,7 +134,6 @@ STAGE=dev
 # AWS Polly Configuration
 VOICE_ID=Lea
 LANGUAGE_CODE=fr-FR
-OUTPUT_FORMAT=mp3
 POLLY_ENGINE=standard
 TEXT_TYPE=ssml
 
@@ -236,7 +235,6 @@ STAGE=production
 # AWS Polly Configuration
 VOICE_ID=Lea
 LANGUAGE_CODE=fr-FR
-OUTPUT_FORMAT=mp3
 POLLY_ENGINE=neural
 TEXT_TYPE=ssml
 

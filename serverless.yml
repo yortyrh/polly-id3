@@ -17,7 +17,6 @@ provider:
     MEMORY_SIZE: ${env:MEMORY_SIZE, '512'}
     MEMORY_SIZE_BULK: ${env:MEMORY_SIZE_BULK, '1024'}
     S3_BUCKET_NAME: ${env:S3_BUCKET_NAME}
-    OUTPUT_FORMAT: ${env:OUTPUT_FORMAT, 'mp3'}
     VOICE_ID: ${env:VOICE_ID, 'Lea'}
     LANGUAGE_CODE: ${env:LANGUAGE_CODE, 'fr-FR'}
     SNS_TOPIC_ARN: 
