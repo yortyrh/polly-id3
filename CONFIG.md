@@ -11,7 +11,7 @@ This document describes all the environment variables used in the Polly ID3 Tag 
 | `VOICE_ID` | `Lea` | AWS Polly voice ID to use for speech synthesis | `VoiceId` |
 | `LANGUAGE_CODE` | `fr-FR` | Language code for speech synthesis | `LanguageCode` |
 | `POLLY_ENGINE` | `standard` | Polly engine type | `'standard' \| 'neural' \| 'generative'` |
-| `TEXT_TYPE` | `ssml` | Type of text input | `'ssml' \| 'text'` |
+| `TEXT_TYPE` | `text` | Type of text input | `'ssml' \| 'text'` |
 
 ### AWS Services Configuration
 
@@ -59,7 +59,7 @@ provider:
     SNS_TOPIC_ARN: 
       Fn::GetAtt: [PollyTaskCompletedTopic, TopicArn]
     POLLY_ENGINE: ${env:POLLY_ENGINE, 'standard'}
-    TEXT_TYPE: ${env:TEXT_TYPE, 'ssml'}
+    TEXT_TYPE: ${env:TEXT_TYPE, 'text'}
     MAX_RETRY_ATTEMPTS: ${env:MAX_RETRY_ATTEMPTS, '3'}
 ```
 

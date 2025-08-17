@@ -135,7 +135,7 @@ STAGE=dev
 VOICE_ID=Lea
 LANGUAGE_CODE=fr-FR
 POLLY_ENGINE=standard
-TEXT_TYPE=ssml
+TEXT_TYPE=text
 
 # AWS Services Configuration
 S3_BUCKET_NAME=your-unique-bucket-name
@@ -236,7 +236,7 @@ STAGE=production
 VOICE_ID=Lea
 LANGUAGE_CODE=fr-FR
 POLLY_ENGINE=neural
-TEXT_TYPE=ssml
+TEXT_TYPE=text
 
 # AWS Services Configuration
 S3_BUCKET_NAME=your-production-bucket-name

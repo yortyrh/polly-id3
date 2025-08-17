@@ -22,7 +22,7 @@ provider:
     SNS_TOPIC_ARN: 
       Fn::GetAtt: [PollyTaskCompletedTopic, TopicArn] # TODO: create a topic in the template
     POLLY_ENGINE: ${env:POLLY_ENGINE, 'standard'}
-    TEXT_TYPE: ${env:TEXT_TYPE, 'ssml'}
+    TEXT_TYPE: ${env:TEXT_TYPE, 'text'}
     MAX_RETRY_ATTEMPTS: ${env:MAX_RETRY_ATTEMPTS, '3'}
   iamRoleStatements:
     - Effect: Allow
