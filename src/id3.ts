@@ -5,7 +5,16 @@ import { Logger } from './services/logger';
 import { StartSpeechSynthesisTaskCommand, VoiceId, LanguageCode, Engine, TextType } from "@aws-sdk/client-polly";
 import { Factory } from './services/Factory';
 
+// Environment variables
+const bucketName = process.env.S3_BUCKET_NAME;
+const defaultVoiceId = (process.env.VOICE_ID || VoiceId.Lea) as VoiceId;
+const defaultLanguageCode = (process.env.LANGUAGE_CODE || LanguageCode.en_US) as LanguageCode;
+const snsTopicArn = process.env.SNS_TOPIC_ARN;
+const defaultEngine = (process.env.POLLY_ENGINE || Engine.GENERATIVE) as Engine;
+const defaultTextType = (process.env.TEXT_TYPE || TextType.TEXT) as TextType;
+
 const factory = new Factory();
+
 interface PollyTaskCompletedMessage {
   taskId: string;
   taskStatus: string;
@@ -28,7 +37,7 @@ const fileNameToPollyFormat = (fileName: string): 'mp3' | 'ogg_vorbis' | 'pcm' |
   if (fileName.endsWith('.mp3')) {
     return 'mp3';
   }
-  return 'mp3';
+  return null; // there is no polly format for this file extension
 }
 
 /**
@@ -47,15 +56,8 @@ const textToTextType = (text: string, forceTextType?: TextType): TextType => {
   if (text.trim().match(/<speak[^>]*>/)) {
     return TextType.SSML;
   }
-  return TextType.TEXT;
+  return defaultTextType;
 }
-
-// Environment variables
-const bucketName = process.env.S3_BUCKET_NAME;
-const defaultVoiceId = (process.env.VOICE_ID || VoiceId.Lea) as VoiceId;
-const defaultLanguageCode = (process.env.LANGUAGE_CODE || LanguageCode.en_US) as LanguageCode;
-const snsTopicArn = process.env.SNS_TOPIC_ARN;
-const defaultEngine = (process.env.POLLY_ENGINE || Engine.GENERATIVE) as Engine;
 
 /**
  * This type is used to define the event object for the handler function.
@@ -146,7 +148,7 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
   if (!pollyFormat) {
     return {
       statusCode: 400,
-      body: JSON.stringify('Invalid file extension: ' + key),
+      body: JSON.stringify('Invalid file extension: ' + key + '. There is no polly format for this file extension.'),
     };
   }
 
