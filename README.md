@@ -27,7 +27,9 @@ A serverless AWS application that automatically generates speech audio using Ama
 
 ### Quick Start
 
-For a complete step-by-step setup guide, see [AWS_SETUP.md](AWS_SETUP.md).
+For complete setup guides, see:
+- [AWS_SETUP.md](AWS_SETUP.md) - Complete AWS account setup
+- [GITHUB_SETUP.md](GITHUB_SETUP.md) - GitHub Actions configuration
 
 ### Basic Installation
 
@@ -273,6 +275,7 @@ polly-id3/
 ├── package.json               # Dependencies and scripts
 ├── tsconfig.json              # TypeScript configuration
 ├── AWS_SETUP.md               # Complete AWS setup guide
+├── GITHUB_SETUP.md            # GitHub Actions configuration guide
 ├── CONFIG.md                  # Configuration documentation
 ├── env.local.example          # Environment variables example
 └── README.md                  # This file
@@ -304,6 +307,8 @@ The project uses GitHub Actions for manual deployment with cache management:
 - **Manual Deploy**: Allows manual deployment from GitHub Actions UI to any environment
 - **Cache Management**: Optimized builds with Node.js and dependency caching
 - **Environment Variables**: Configurable via GitHub repository variables and secrets
+
+For detailed GitHub Actions setup and configuration, see [GITHUB_SETUP.md](GITHUB_SETUP.md).
 
 ### Cache Management
 
@@ -337,7 +342,7 @@ npm run remove
 
 ### Environment Variables for GitHub Actions
 
-The workflow requires the following GitHub repository variables and secrets:
+The workflow requires the following GitHub repository variables and secrets. For detailed setup instructions, see [GITHUB_SETUP.md](GITHUB_SETUP.md).
 
 **Variables:**
 - `STAGE`: Deployment stage (dev/staging/production)
