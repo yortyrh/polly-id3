@@ -13,7 +13,6 @@ env:
   NODE_VERSION: '22'
   STAGE: ${{ vars.STAGE }}
   S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
-  SNS_TOPIC_ARN: ${{ vars.SNS_TOPIC_ARN }}
   VOICE_ID: ${{ vars.VOICE_ID }}
   LANGUAGE_CODE: ${{ vars.LANGUAGE_CODE }}
   POLLY_ENGINE: ${{ vars.POLLY_ENGINE }}
@@ -87,7 +86,6 @@ jobs:
           # get variables from variables
           STAGE: ${{ env.STAGE }}
           S3_BUCKET_NAME: ${{ env.S3_BUCKET_NAME }}
-          SNS_TOPIC_ARN: ${{ env.SNS_TOPIC_ARN }}
           VOICE_ID: ${{ env.VOICE_ID }}
           LANGUAGE_CODE: ${{ env.LANGUAGE_CODE }}
           POLLY_ENGINE: ${{ env.POLLY_ENGINE }}
