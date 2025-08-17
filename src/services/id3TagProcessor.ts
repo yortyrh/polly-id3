@@ -1,26 +1,112 @@
 import * as NodeID3 from 'node-id3';
 import { Logger } from './logger';
 
+/**
+ * @interface ID3Metadata
+ * @description The metadata for an MP3 file
+ * @example
+ * const metadata: ID3Metadata = {
+ *   title: 'Test Title',
+ *   artist: 'Test Artist',
+ *   album: 'Test Album',
+ *   year: '2025',
+ *   genre: 'Test Genre',
+ *   comment: 'Test Comment',
+ *   lyrics: 'Test Lyrics',
+ *   composer: 'Test Composer',
+ *   albumArtist: 'Test Album Artist',
+ *   bpm: '120',
+ *   picture: 'https://example.com/image.jpg',
+ *   track: '1',
+ *   other: 'Test Other',
+ * };
+ */
 export interface ID3Metadata {
+  /**
+   * @title - The title of the song
+   */
   title?: string;
+
+  /**
+   * @artist - The artist of the song
+   */
   artist?: string;
+
+  /**
+   * @album - The album of the song
+   */
   album?: string;
-  year?: string | number;
-  track?: string | number;
+
+  /**
+   * @year - The year of the song
+   */
   genre?: string;
+
+  /**
+   * @comment - The comment of the song
+   */
   comment?: string;
+
+  /**
+   * @lyrics - The lyrics of the song
+   */
   lyrics?: string;
+
+  /**
+   * @composer - The composer of the song
+   */
   composer?: string;
+
+  /**
+   * @albumArtist - The album artist of the song
+   */
   albumArtist?: string;
-  disc?: string | number;
+
+  /**
+   * @bpm - The BPM of the song
+   */
   bpm?: string | number;
+
+  /**
+   * @picture - The picture of the song
+   */
   picture?: string;
+
+  /**
+   * @[key: string] - Any other metadata
+   */
   [key: string]: any;
 }
 
+/**
+ * @class ID3TagProcessor
+ * @description Processes ID3 tags for an MP3 file
+ * @example
+ * const id3TagProcessor = new ID3TagProcessor();
+ * const mp3Buffer = await id3TagProcessor.applyTags(mp3Buffer, {
+ *   title: 'Test Title',
+ *   artist: 'Test Artist',
+ *   album: 'Test Album',
+ *   year: '2025',
+ *   genre: 'Test Genre',
+ *   comment: 'Test Comment',
+ *   lyrics: 'Test Lyrics',
+ *   composer: 'Test Composer',
+ *   albumArtist: 'Test Album Artist',
+ *   bpm: '120',
+ *   picture: 'https://example.com/image.jpg',
+ *   track: '1',
+ *   other: 'Test Other',
+ * });
+ */
 export class ID3TagProcessor {
   private logger = new Logger();
 
+  /**
+   * Converts an image URL to a Buffer
+   * @param imageUrl - The URL of the image
+   * @returns The MIME type and image buffer
+   */
   private  async imageUrlToBuffer(imageUrl: string): Promise<{ mime: string, imageBuffer: Buffer }> {
     const response = await fetch(imageUrl);
     if (!response.ok) {

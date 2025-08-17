@@ -97,7 +97,6 @@ type HandlerEvent = {
      "comment": "Test Comment 1",
      "genre": "Test Genre 1",
      "track": "1",
-     "disc": "1",
      "picture": "https://dummyimage.com/600x400/000/fff.png"
    }
 }

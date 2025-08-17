@@ -12,16 +12,24 @@ A serverless AWS application that automatically generates speech audio using Ama
 - **Metadata Management**: Supports standard and custom ID3 metadata fields
 - **Environment Variables**: Fully configurable via environment variables
 - **Cross-Platform Deployment**: Node.js-based deployment script
+- **CI/CD Integration**: GitHub Actions with cache management for faster builds
+- **Multiple Audio Formats**: Support for MP3, OGG, and PCM formats
+- **SSML Support**: Rich text-to-speech with SSML markup
 
 ## 📋 Prerequisites
 
 - Node.js 20.x or higher
 - AWS CLI configured with appropriate permissions
 - Serverless Framework installed globally: `npm install -g serverless`
-
-
+- GitHub repository with configured secrets for CI/CD
 
 ## 🛠️ Installation
+
+### Quick Start
+
+For a complete step-by-step setup guide, see [AWS_SETUP.md](AWS_SETUP.md).
+
+### Basic Installation
 
 1. **Clone the repository**
    ```bash
@@ -123,6 +131,33 @@ Initiates text-to-speech synthesis with ID3 metadata.
 }
 ```
 
+**Advanced Request Example:**
+```json
+{
+  "text": "<speak>Hello, this is a test.</speak>",
+  "key": "test.mp3",
+  "languageCode": "en-US",
+  "voiceId": "Matthew",
+  "engine": "neural",
+  "textType": "ssml",
+  "override": false,
+  "id3": {
+    "title": "Test Audio",
+    "artist": "Test Artist",
+    "album": "Test Album",
+    "year": "2024",
+    "track": "1",
+    "genre": "Test",
+    "comment": "Generated with AWS Polly",
+    "lyrics": "Hello, this is a test.",
+    "composer": "AWS Polly",
+    "albumArtist": "Test Artist",
+    "bpm": "120",
+    "picture": "https://example.com/cover.jpg"
+  }
+}
+```
+
 #### 2. Task Completion Handler (`id3.pollyTaskCompleted`)
 Automatically triggered when Polly synthesis completes. Applies ID3 tags to the generated MP3 file.
 
@@ -144,6 +179,15 @@ Updates ID3 metadata for existing MP3 files in S3.
 | `composer` | Composer name | "AWS Polly" |
 | `albumArtist` | Album artist | "Polly Voice" |
 | `bpm` | Beats per minute | "120" |
+| `picture` | Cover art URL | "https://example.com/cover.jpg" |
+
+### Supported Audio Formats
+
+| Format | File Extension | Polly Format |
+|--------|----------------|--------------|
+| MP3 | `.mp3` | `mp3` |
+| OGG Vorbis | `.ogg`, `.oga` | `ogg_vorbis` |
+| PCM | `.wav`, `.aiff` | `pcm` |
 
 ## 🏗️ Architecture
 
@@ -214,19 +258,24 @@ For more information about running Serverless Framework in your own CI/CD pipeli
 
 ```
 polly-id3/
-├── id3.ts                 # Main Lambda functions
-├── services/
-│   ├── id3TagProcessor.ts # ID3 tag processing logic
-│   ├── s3Service.ts       # S3 operations
-│   └── logger.ts          # Logging utility
+├── src/
+│   ├── id3.ts                 # Main Lambda functions
+│   └── services/
+│       ├── id3TagProcessor.ts # ID3 tag processing logic
+│       ├── s3Service.ts       # S3 operations
+│       ├── logger.ts          # Logging utility
+│       └── Factory.ts         # Service factory
 ├── scripts/
-│   └── deploy.js          # Node.js deploy script
-├── package.json           # Dependencies and scripts
+│   └── deploy.js              # Node.js deploy script
 ├── .github/workflows/
-│   └── manual-deploy.yml  # GitHub Actions workflow
-├── serverless.yml         # Serverless configuration
-├── package.json           # Dependencies
-└── tsconfig.json          # TypeScript configuration
+│   └── manual-deploy.yml      # GitHub Actions workflow
+├── serverless.yml             # Serverless configuration
+├── package.json               # Dependencies and scripts
+├── tsconfig.json              # TypeScript configuration
+├── AWS_SETUP.md               # Complete AWS setup guide
+├── CONFIG.md                  # Configuration documentation
+├── env.local.example          # Environment variables example
+└── README.md                  # This file
 ```
 
 ### Local Development
@@ -250,11 +299,25 @@ polly-id3/
 
 ### Continuous Integration
 
-The project uses GitHub Actions for manual deployment:
+The project uses GitHub Actions for manual deployment with cache management:
 
 - **Manual Deploy**: Allows manual deployment from GitHub Actions UI to any environment
+- **Cache Management**: Optimized builds with Node.js and dependency caching
+- **Environment Variables**: Configurable via GitHub repository variables and secrets
 
-See [`.github/README.md`](.github/README.md) for detailed workflow documentation.
+### Cache Management
+
+The GitHub Actions workflow includes comprehensive cache management:
+
+- **Node modules cache**: Caches `~/.npm` directory
+- **Dependencies cache**: Caches `node_modules` directory
+- **Conditional installation**: Only installs dependencies when cache miss occurs
+
+Benefits:
+- Faster build times on subsequent runs
+- Reduced network usage
+- Better reliability
+- Cost optimization for GitHub Actions minutes
 
 ## 🚀 Deployment Workflow
 
@@ -271,6 +334,26 @@ npm run deploy:local
 npm run deploy
 npm run remove
 ```
+
+### Environment Variables for GitHub Actions
+
+The workflow requires the following GitHub repository variables and secrets:
+
+**Variables:**
+- `STAGE`: Deployment stage (dev/staging/production)
+- `S3_BUCKET_NAME`: S3 bucket name
+- `SNS_TOPIC_ARN`: SNS topic ARN
+- `VOICE_ID`: Polly voice ID
+- `LANGUAGE_CODE`: Language code
+- `POLLY_ENGINE`: Polly engine type
+- `TEXT_TYPE`: Text type
+- `MAX_RETRY_ATTEMPTS`: Maximum retry attempts
+- `AWS_REGION`: AWS region
+
+**Secrets:**
+- `AWS_ACCESS_KEY_ID`: AWS access key
+- `AWS_SECRET_ACCESS_KEY`: AWS secret key
+- `SERVERLESS_ACCESS_KEY`: Serverless Framework access key
 
 ## 📝 License
 
@@ -325,3 +408,5 @@ User: arn:aws:iam::1234567890:user/deploy-user is not authorized to perform: s3:
 - TypeScript implementation
 - Cross-platform Node.js deployment script
 - Simplified npm scripts for deployment and removal
+- Cache management for GitHub Actions
+- Enhanced documentation and configuration options

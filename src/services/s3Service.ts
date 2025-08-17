@@ -1,9 +1,17 @@
 import { S3 } from 'aws-sdk';
 import { Logger } from './logger';
 
+/**
+ * @class S3Service
+ * @description Handles S3 operations
+ */
 export class S3Service {
   private logger = new Logger();
 
+  /**
+   * @constructor
+   * @param s3 - The S3 client
+   */
   constructor(private s3: S3) {}
 
   /**
@@ -54,6 +62,12 @@ export class S3Service {
     }
   }
 
+  /**
+   * Lists all MP3 files in a given S3 bucket and key
+   * @param bucketName - The S3 bucket name
+   * @param key - The S3 object key
+   * @returns Promise<string[]> - Array of MP3 file keys
+   */
   async listMp3Files(bucketName: string, key: string): Promise<string[]> {
     const files = await this.listObjects(bucketName, key);
     return files.filter(file => file.endsWith('.mp3'));
