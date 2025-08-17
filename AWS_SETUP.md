@@ -8,7 +8,7 @@ Before starting, ensure you have:
 
 - An AWS account with administrative access
 - AWS CLI installed and configured
-- Node.js 20.x or higher installed
+- Node.js 22.x or higher installed (minimum required version)
 - Serverless Framework installed globally: `npm install -g serverless`
 
 ## Step 1: AWS Account Preparation
@@ -108,6 +108,8 @@ cd polly-id3
 # Install dependencies
 npm install
 ```
+
+**Note**: Ensure you have Node.js 22.x or higher installed before running `npm install`.
 
 ### 2.2 Configure Environment
 

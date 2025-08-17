@@ -37,7 +37,7 @@ The workflow is triggered manually using `workflow_dispatch` with the following 
 
 2. **Setup Node.js**
    - Uses `actions/setup-node@v4`
-   - Node.js version: 22.x
+   - Node.js version: 22.x (minimum required version)
    - Enables npm caching
 
 3. **Cache Node Modules**
@@ -132,6 +132,8 @@ The workflow implements comprehensive cache management for faster builds:
    git remote set-url origin <your-repo-url>
    git push -u origin main
    ```
+
+**Note**: Ensure your local environment has Node.js 22.x or higher installed for development.
 
 ### Step 2: Configure Repository Variables
 
