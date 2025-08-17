@@ -18,7 +18,7 @@ A serverless AWS application that automatically generates speech audio using Ama
 
 ## 📋 Prerequisites
 
-- Node.js 20.x or higher (minimum required version)
+- Node.js 22.x or higher (minimum required version)
 - AWS CLI configured with appropriate permissions
 - Serverless Framework installed globally: `npm install -g serverless`
 - GitHub repository with configured secrets for CI/CD
@@ -298,7 +298,7 @@ polly-id3/
    serverless invoke local --function id3 --data '{"text":"<speak>Hello</speak>","key":"test.mp3"}'
    ```
 
-**Note**: Ensure you have Node.js 20.x or higher installed for development.
+**Note**: Ensure you have Node.js 22.x or higher installed for development.
 
 ## 🧪 Testing
 

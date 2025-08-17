@@ -250,7 +250,7 @@ node --env-file=.env.local scripts/deploy.js
 node scripts/deploy.js
 ```
 
-**Note**: Ensure you have Node.js 20.x or higher installed for local deployment.
+**Note**: Ensure you have Node.js 22.x or higher installed for local deployment.
 
 ## Performance Tuning
 
