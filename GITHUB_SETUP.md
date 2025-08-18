@@ -154,7 +154,7 @@ S3_BUCKET_NAME=my-audio-bucket
 VOICE_ID=Lea
 LANGUAGE_CODE=fr-FR
 POLLY_ENGINE=standard
-TEXT_TYPE=ssml
+TEXT_TYPE=text
 MAX_RETRY_ATTEMPTS=3
 AWS_REGION=us-east-1
 ```
@@ -230,7 +230,7 @@ S3_BUCKET_NAME=my-audio-bucket-dev
 VOICE_ID=Lea
 LANGUAGE_CODE=fr-FR
 POLLY_ENGINE=standard
-TEXT_TYPE=ssml
+TEXT_TYPE=text
 MAX_RETRY_ATTEMPTS=2
 AWS_REGION=us-east-1
 ```
@@ -244,7 +244,7 @@ S3_BUCKET_NAME=my-audio-bucket-staging
 VOICE_ID=Lea
 LANGUAGE_CODE=fr-FR
 POLLY_ENGINE=neural
-TEXT_TYPE=ssml
+TEXT_TYPE=text
 MAX_RETRY_ATTEMPTS=3
 AWS_REGION=us-east-1
 ```
@@ -258,7 +258,7 @@ S3_BUCKET_NAME=my-audio-bucket-prod
 VOICE_ID=Lea
 LANGUAGE_CODE=fr-FR
 POLLY_ENGINE=neural
-TEXT_TYPE=ssml
+TEXT_TYPE=text
 MAX_RETRY_ATTEMPTS=5
 AWS_REGION=us-east-1
 ```

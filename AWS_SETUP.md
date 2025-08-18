@@ -134,9 +134,8 @@ STAGE=dev
 # AWS Polly Configuration
 VOICE_ID=Lea
 LANGUAGE_CODE=fr-FR
-OUTPUT_FORMAT=mp3
 POLLY_ENGINE=standard
-TEXT_TYPE=ssml
+TEXT_TYPE=text
 
 # AWS Services Configuration
 S3_BUCKET_NAME=your-unique-bucket-name
@@ -236,9 +235,8 @@ STAGE=production
 # AWS Polly Configuration
 VOICE_ID=Lea
 LANGUAGE_CODE=fr-FR
-OUTPUT_FORMAT=mp3
 POLLY_ENGINE=neural
-TEXT_TYPE=ssml
+TEXT_TYPE=text
 
 # AWS Services Configuration
 S3_BUCKET_NAME=your-production-bucket-name
