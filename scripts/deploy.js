@@ -5,8 +5,6 @@
  * This script loads environment variables from .env.local and deploys to the specified environment
  */
 
-const fs = require('fs');
-const path = require('path');
 const { spawn } = require('child_process');
 
 // Colors for output

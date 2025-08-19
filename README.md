@@ -1,372 +1,173 @@
 # Polly ID3 Tag Manager
 
-A serverless AWS application that automatically generates speech audio using Amazon Polly and applies ID3 metadata tags to the resulting MP3 files. Built with TypeScript and the Serverless Framework.
+A serverless AWS application that automatically generates speech audio using Amazon Polly and applies ID3 metadata tags to the resulting MP3 files. Perfect for n8n workflow automation and text-to-speech integration.
 
-## 🚀 Features
+## Why?
 
-- **Text-to-Speech Synthesis**: Uses AWS Polly's neural voices for high-quality speech generation
-- **Automatic ID3 Tagging**: Applies comprehensive metadata tags to MP3 files
-- **Serverless Architecture**: Built on AWS Lambda, S3, and SNS for scalability
-- **French Language Support**: Optimized for French text-to-speech with voice 'Lea'
-- **Retry Logic**: Robust error handling with exponential backoff
-- **Metadata Management**: Supports standard and custom ID3 metadata fields
-- **Environment Variables**: Fully configurable via environment variables
-- **Cross-Platform Deployment**: Node.js-based deployment script
-- **CI/CD Integration**: GitHub Actions with cache management for faster builds
-- **Multiple Audio Formats**: Support for MP3, OGG, and PCM formats
+Transform text into professionally tagged MP3 files with a single API call. Ideal for n8n workflows that need to generate audio content with proper metadata for podcasts, audiobooks, or automated voice content.
+
+## Features
+
+- **Text-to-Speech**: AWS Polly integration with neural voices
+- **ID3 Tagging**: Automatic metadata application (title, artist, album, artwork, custom tags)
+- **S3 Storage**: Direct upload to S3 with configurable bucket
+- **Serverless**: AWS Lambda-based architecture for scalability
+- **Multiple Formats**: Support for MP3, OGG, and PCM audio formats
 - **SSML Support**: Rich text-to-speech with SSML markup
+- **CI/CD Ready**: GitHub Actions with cache management
 
-## 📋 Prerequisites
-
-- Node.js 22.x or higher (minimum required version)
-- AWS CLI configured with appropriate permissions
-- Serverless Framework installed globally: `npm install -g serverless`
-- GitHub repository with configured secrets for CI/CD
-
-## 🛠️ Installation
-
-### Quick Start
-
-For complete setup guides, see:
-- [AWS_SETUP.md](AWS_SETUP.md) - Complete AWS account setup
-- [GITHUB_SETUP.md](GITHUB_SETUP.md) - GitHub Actions configuration
-
-### Basic Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd polly-id3
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Configure AWS credentials**
-   ```bash
-   aws configure
-   ```
-   
-   **Or set environment variables:**
-   ```bash
-   export AWS_ACCESS_KEY_ID=your_access_key
-   export AWS_SECRET_ACCESS_KEY=your_secret_key
-   export AWS_REGION=us-east-1
-   ```
-
-## 🚀 Deployment
-
-### Quick Deploy
-
-Deploy the application to AWS using the deploy scripts:
+## Quick Start
 
 ```bash
-# Deploy using .env.local file
+# Clone and install
+git clone <repository-url>
+cd polly-id3
+npm install
+
+# Configure environment
+cp env.local.example .env.local
+# Edit .env.local with your AWS credentials and S3 bucket
+
+# Deploy
 npm run deploy:local
-
-# Deploy with custom environment variables
-npm run deploy
-
-# Remove deployment
-npm run remove
 ```
 
-### Manual Deploy
+### Test the Lambda Function
 
-Deploy using Serverless Framework directly:
+After deployment, test the function directly using AWS CLI:
 
 ```bash
-# Deploy to dev stage
-serverless deploy --stage dev
+# Test basic text-to-speech
+aws lambda invoke \
+  --function-name polly-id3-dev-id3 \
+  --payload '{"text":"Hello, this is a test.","key":"test.mp3"}' \
+  response.json
 
-# Deploy to staging stage
-serverless deploy --stage staging
+# Test with ID3 metadata
+aws lambda invoke \
+  --function-name polly-id3-dev-id3 \
+  --payload '{
+    "text":"Hello, this is a test with metadata.",
+    "key":"test-with-metadata.mp3",
+    "id3": {
+      "title": "Test Audio",
+      "artist": "AI Voice",
+      "album": "Test Album",
+      "year": "2024",
+      "genre": "Test"
+    }
+  }' \
+  response.json
 
-# Deploy to production stage
-serverless deploy --stage production
+# Check the response
+cat response.json
+
+# Copy the generated file from S3 (replace with your bucket name)
+aws s3 cp s3://your-bucket-name/test.mp3 ./downloaded-test.mp3
+aws s3 cp s3://your-bucket-name/test-with-metadata.mp3 ./downloaded-test-with-metadata.mp3
+
+# List files in your S3 bucket
+aws s3 ls s3://your-bucket-name/
 ```
 
-### Environment Configuration
+## n8n Integration
 
-1. **Copy the example environment file:**
-   ```bash
-   cp env.local.example .env.local
-   ```
+### Example 1: French Class Generator
 
-2. **Customize your local settings in `.env.local`:**
-   ```bash
-   AWS_REGION=us-east-1
-   AWS_PROFILE=default
-   STAGE=dev
-   S3_BUCKET_NAME=sample-bucket
-   ```
+A complete workflow that generates French language learning content using OpenAI and Polly ID3:
 
-This will create:
-- Lambda functions for speech synthesis and ID3 processing
-- S3 bucket (configurable via environment variables) for audio file storage
-- SNS topic (`PollyTaskCompletedTopic`) for task completion notifications
-- IAM roles with necessary permissions
+1. **Form Trigger** → Collect French text input
+2. **OpenAI Node** → Generate SSML content with vocabulary and phrases
+3. **Set Node** → Prepare Polly ID3 parameters
+4. **AWS Lambda Node** → Generate audio with ID3 tags
 
-## 📖 Usage
+**Features:**
+- Generates vocabulary lessons with definitions
+- Creates 10 practice phrases with 10-second pauses
+- Uses French voice (Lea) with generative engine
+- Adds complete ID3 metadata including artwork
 
-### API Endpoints
+[Download French Class Workflow](examples/n8n/french-class.json)
 
-The application provides three main Lambda functions:
+### Example 2: Simple Sub-Workflow
 
-#### 1. Speech Synthesis (`id3.handler`)
-Initiates text-to-speech synthesis with ID3 metadata.
+A reusable sub-workflow for basic text-to-speech conversion:
 
-**Request Example:**
-```json
-{
-  "text": "<speak>Bonjour, comment allez-vous?</speak>",
-  "key": "greeting.mp3",
-  "id3": {
-    "title": "French Greeting",
-    "artist": "Polly Voice",
-    "album": "French Lessons",
-    "year": "2024",
-    "genre": "Educational"
-  }
-}
-```
+1. **Workflow Trigger** → Accept input parameters
+2. **AWS Lambda Node** → Generate audio with ID3 tags
 
-**Advanced Request Example:**
-```json
-{
-  "text": "<speak>Hello, this is a test.</speak>",
-  "key": "test.mp3",
-  "languageCode": "en-US",
-  "voiceId": "Matthew",
-  "engine": "neural",
-  "textType": "ssml",
-  "override": false,
-  "id3": {
-    "title": "Test Audio",
-    "artist": "Test Artist",
-    "album": "Test Album",
-    "year": "2024",
-    "track": "1",
-    "genre": "Test",
-    "comment": "Generated with AWS Polly",
-    "lyrics": "Hello, this is a test.",
-    "composer": "AWS Polly",
-    "albumArtist": "Test Artist",
-    "bpm": "120",
-    "picture": "https://example.com/cover.jpg"
-  }
-}
-```
+**Features:**
+- Reusable sub-workflow component
+- Configurable voice, language, and engine
+- Custom ID3 metadata support
+- Simple integration into larger workflows
 
-#### 2. Task Completion Handler (`id3.pollyTaskCompleted`)
-Automatically triggered when Polly synthesis completes. Applies ID3 tags to the generated MP3 file.
+[Download Sub-Workflow](examples/n8n/sub-workflow.json)
 
-#### 3. Metadata Update (`id3.updateId3Metadata`)
-Updates ID3 metadata for existing MP3 files in S3.
+### Sample Output
 
-### Supported ID3 Metadata Fields
+Both workflows generate MP3 files with complete ID3 metadata:
+- **Title**: Generated from content or custom
+- **Artist**: Amazon Polly
+- **Album**: Samples Polly-ID3
+- **Artwork**: Custom cover images
+- **Year**: Current year
+- **Genre**: Development
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| `title` | Track title | "French Greeting" |
-| `artist` | Artist name | "Polly Voice" |
-| `album` | Album name | "French Lessons" |
-| `year` | Release year | "2024" |
-| `track` | Track number | "1" |
-| `genre` | Music genre | "Educational" |
-| `comment` | Comments | "Generated with AWS Polly" |
-| `lyrics` | Song lyrics | "Bonjour, comment allez-vous?" |
-| `composer` | Composer name | "AWS Polly" |
-| `albumArtist` | Album artist | "Polly Voice" |
-| `bpm` | Beats per minute | "120" |
-| `picture` | Cover art URL | "https://example.com/cover.jpg" |
+## Configuration
 
-### Supported Audio Formats
+### Required Environment Variables
 
-| Format | File Extension | Polly Format |
-|--------|----------------|--------------|
-| MP3 | `.mp3` | `mp3` |
-| OGG Vorbis | `.ogg`, `.oga` | `ogg_vorbis` |
-| PCM | `.wav`, `.aiff` | `pcm` |
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `AWS_ACCESS_KEY_ID` | AWS access key | `AKIA...` |
+| `AWS_SECRET_ACCESS_KEY` | AWS secret key | `...` |
+| `AWS_REGION` | AWS region | `us-east-1` |
+| `S3_BUCKET_NAME` | S3 bucket name | `my-audio-bucket` |
+| `SERVERLESS_ACCESS_KEY` | Serverless Framework key | `...` |
 
-## 🏗️ Architecture
+### Optional Configuration
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   API Gateway   │───▶│  Lambda (id3)   │───▶│   AWS Polly     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                                ▼
-                       ┌─────────────────┐
-                       │   S3 Bucket     │
-                       │  (Audio Files)  │
-                       └─────────────────┘
-                                │
-                                ▼
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │   SNS Topic     │───▶│ Lambda (Task    │
-                       │ (Notifications) │    │  Completed)     │
-                       └─────────────────┘    └─────────────────┘
-```
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VOICE_ID` | `Lea` | Polly voice ID |
+| `LANGUAGE_CODE` | `fr-FR` | Language code |
+| `POLLY_ENGINE` | `standard` | Polly engine type |
+| `TEXT_TYPE` | `text` | Text input type |
 
-## ⚙️ Configuration
+## Setup Guides
 
-The application uses environment variables for all configuration. See [CONFIG.md](CONFIG.md) for detailed documentation of all available options.
+- **[AWS Setup](AWS_SETUP.md)** - Complete AWS account configuration
+- **[GitHub Actions](GITHUB_SETUP.md)** - CI/CD deployment setup
+- **[Configuration](CONFIG.md)** - Detailed configuration options
+- **[Architecture](ARCHITECTURE.md)** - System design and components
 
-### Key Configuration
+## Limitations
 
-- **Voice ID**: `Lea` (French neural voice)
-- **Language Code**: `fr-FR` (French)
-- **Output Format**: `mp3`
-- **S3 Bucket**: Configurable via `S3_BUCKET_NAME` environment variable
-- **SNS Topic**: `PollyTaskCompletedTopic` (created automatically)
+- **File Size**: Maximum 150MB per audio file
+- **Processing Time**: Up to 15 minutes for long audio files
+- **Voice Availability**: Limited to AWS Polly supported voices
+- **Format Support**: MP3, OGG, PCM only
 
-### Serverless Framework Access Key
+## FAQ
 
-For CI/CD deployments using GitHub Actions, you need to configure the `SERVERLESS_ACCESS_KEY` environment variable. This key is required for the Serverless Framework to authenticate with the Serverless Dashboard.
+**Q: Can I use custom voices?**
+A: Only AWS Polly supported voices are available.
 
-**Setup Instructions:**
+**Q: How long can the text be?**
+A: Up to 3000 characters per request.
 
-1. **Get your Serverless Access Key:**
-   - Log in to your [Serverless Dashboard](https://app.serverless.com)
-   - Navigate to your profile settings
-   - Generate a new access key
+**Q: Can I update metadata after generation?**
+A: Yes, use the `updateId3Metadata` function.
 
-2. **Add to GitHub Secrets:**
-   - Go to your repository → Settings → Secrets and variables → Actions
-   - Create a new repository secret named `SERVERLESS_ACCESS_KEY`
-   - Set the value to your Serverless access key
+**Q: Is SSML supported?**
+A: Yes, set `TEXT_TYPE=ssml` and wrap text in `<speak>` tags.
 
-3. **For Local Development:**
-   ```bash
-   export SERVERLESS_ACCESS_KEY=your_access_key_here
-   ```
-
-For more information about running Serverless Framework in your own CI/CD pipeline, see the [official documentation](https://www.serverless.com/framework/docs/guides/dashboard/cicd/running-in-your-own-cicd).
-
-### AWS Services Used
-
-- **AWS Polly**: Text-to-speech synthesis
-- **AWS S3**: File storage and retrieval
-- **AWS Lambda**: Serverless compute
-- **AWS SNS**: Event notifications
-- **AWS IAM**: Security and permissions
-
-## 🔧 Development
-
-### Project Structure
-
-```
-polly-id3/
-├── src/
-│   ├── id3.ts                 # Main Lambda functions
-│   └── services/
-│       ├── id3TagProcessor.ts # ID3 tag processing logic
-│       ├── s3Service.ts       # S3 operations
-│       ├── logger.ts          # Logging utility
-│       └── Factory.ts         # Service factory
-├── scripts/
-│   └── deploy.js              # Node.js deploy script
-├── .github/workflows/
-│   └── manual-deploy.yml      # GitHub Actions workflow
-├── serverless.yml             # Serverless configuration
-├── package.json               # Dependencies and scripts
-├── tsconfig.json              # TypeScript configuration
-├── AWS_SETUP.md               # Complete AWS setup guide
-├── GITHUB_SETUP.md            # GitHub Actions configuration guide
-├── CONFIG.md                  # Configuration documentation
-├── env.local.example          # Environment variables example
-└── README.md                  # This file
-```
-
-### Local Development
-
-1. **Install development dependencies**
-   ```bash
-   npm install
-   ```
-
-2. **Run TypeScript compilation**
-   ```bash
-   npm run build
-   ```
-
-3. **Test locally with Serverless**
-   ```bash
-   serverless invoke local --function id3 --data '{"text":"<speak>Hello</speak>","key":"test.mp3"}'
-   ```
-
-**Note**: Ensure you have Node.js 22.x or higher installed for development.
-
-## 🧪 Testing
-
-### Continuous Integration
-
-The project uses GitHub Actions for manual deployment with cache management:
-
-- **Manual Deploy**: Allows manual deployment from GitHub Actions UI to any environment
-- **Cache Management**: Optimized builds with Node.js and dependency caching
-- **Environment Variables**: Configurable via GitHub repository variables and secrets
-
-For detailed GitHub Actions setup and configuration, see [GITHUB_SETUP.md](GITHUB_SETUP.md).
-
-### Cache Management
-
-The GitHub Actions workflow includes comprehensive cache management:
-
-- **Node modules cache**: Caches `~/.npm` directory
-- **Dependencies cache**: Caches `node_modules` directory
-- **Conditional installation**: Only installs dependencies when cache miss occurs
-
-Benefits:
-- Faster build times on subsequent runs
-- Reduced network usage
-- Better reliability
-- Cost optimization for GitHub Actions minutes
-
-## 🚀 Deployment Workflow
-
-### Manual Deployment
-
-For deployments, use the GitHub Actions UI:
-1. Go to **Actions** → **Manual Deploy**
-2. Choose verbose output if needed
-3. Click **Run workflow**
-
-Alternatively, use the local deploy scripts:
-```bash
-npm run deploy:local
-npm run deploy
-npm run remove
-```
-
-### Environment Variables for GitHub Actions
-
-The workflow requires the following GitHub repository variables and secrets. For detailed setup instructions, see [GITHUB_SETUP.md](GITHUB_SETUP.md).
-
-**Variables:**
-- `STAGE`: Deployment stage (dev/staging/production)
-- `S3_BUCKET_NAME`: S3 bucket name
-- `SNS_TOPIC_ARN`: SNS topic ARN
-- `VOICE_ID`: Polly voice ID
-- `LANGUAGE_CODE`: Language code
-- `POLLY_ENGINE`: Polly engine type
-- `TEXT_TYPE`: Text type
-- `MAX_RETRY_ATTEMPTS`: Maximum retry attempts
-- `AWS_REGION`: AWS region
-
-**Secrets:**
-- `AWS_ACCESS_KEY_ID`: AWS access key
-- `AWS_SECRET_ACCESS_KEY`: AWS secret key
-- `SERVERLESS_ACCESS_KEY`: Serverless Framework access key
-
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -374,46 +175,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📞 Support
+## Support
 
-For issues and questions:
 - Create an issue in the GitHub repository
-- Check the AWS CloudWatch logs for debugging
-- Review the Serverless Framework documentation
-
-### **Common AWS Permission Issues**
-
-If you encounter permission errors during deployment:
-
-1. **CloudFormation Errors**: Ensure your AWS user has `cloudformation:*` permissions
-2. **IAM Role Creation Fails**: Verify `iam:CreateRole` and `iam:PassRole` permissions
-3. **S3 Bucket Access Denied**: Check S3 permissions for bucket creation and access
-4. **Lambda Function Creation Fails**: Ensure `lambda:*` permissions are granted
-5. **SNS Topic Creation Fails**: Verify SNS permissions for topic management
-
-**Error Examples:**
-```bash
-# CloudFormation permission error
-User: arn:aws:iam::1234567890:user/deploy-user is not authorized to perform: cloudformation:CreateStack
-
-# IAM role permission error  
-User: arn:aws:iam::1234567890:user/deploy-user is not authorized to perform: iam:CreateRole
-
-# S3 permission error
-User: arn:aws:iam::1234567890:user/deploy-user is not authorized to perform: s3:CreateBucket
-```
-
-**Solution**: Add the missing permissions to your IAM user/role using the policies provided above.
-
-## 🔄 Version History
-
-- **v1.0.0**: Initial release with basic Polly integration and ID3 tagging
-- Support for French text-to-speech
-- Serverless architecture implementation
-- GitHub Actions manual deployment workflow
-- Environment variable configuration
-- TypeScript implementation
-- Cross-platform Node.js deployment script
-- Simplified npm scripts for deployment and removal
-- Cache management for GitHub Actions
-- Enhanced documentation and configuration options
+- Check [AWS Setup](AWS_SETUP.md) for deployment issues
+- Review [Configuration](CONFIG.md) for setup questions

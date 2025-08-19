@@ -8,7 +8,7 @@ import { Factory } from './services/Factory';
 // Environment variables
 const bucketName = process.env.S3_BUCKET_NAME;
 const defaultVoiceId = (process.env.VOICE_ID || VoiceId.Lea) as VoiceId;
-const defaultLanguageCode = (process.env.LANGUAGE_CODE || LanguageCode.en_US) as LanguageCode;
+const defaultLanguageCode = (process.env.LANGUAGE_CODE || LanguageCode.fr_FR) as LanguageCode;
 const snsTopicArn = process.env.SNS_TOPIC_ARN;
 const defaultEngine = (process.env.POLLY_ENGINE || Engine.GENERATIVE) as Engine;
 const defaultTextType = (process.env.TEXT_TYPE || TextType.TEXT) as TextType;
@@ -99,7 +99,7 @@ type HandlerEvent = {
      "comment": "Test Comment 1",
      "genre": "Test Genre 1",
      "track": "1",
-     "picture": "https://dummyimage.com/600x400/000/fff.png"
+     "artwork": "https://dummyimage.com/600x400/000/fff.png"
    }
 }
 */

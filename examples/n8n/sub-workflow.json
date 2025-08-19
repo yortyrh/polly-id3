@@ -1,0 +1,109 @@
+{
+    "nodes": [
+      {
+        "parameters": {
+          "function": "arn:aws:lambda:us-east-1:1234567890123:function:polly-id3-dev-id3",
+          "payload": "={{JSON.stringify($json, null, 2)}}"
+        },
+        "type": "n8n-nodes-base.awsLambda",
+        "typeVersion": 1,
+        "position": [
+          400,
+          0
+        ],
+        "id": "5806fe2e-ccd9-4079-967a-5e5baad4aad9",
+        "name": "Call Polly ID3",
+        "retryOnFail": false,
+        "waitBetweenTries": 3000,
+        "credentials": {
+          "aws": {
+            "id": "NNfowCT8SFlAf8xW",
+            "name": "AWS account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "workflowInputs": {
+            "values": [
+              {
+                "name": "key"
+              },
+              {
+                "name": "text"
+              },
+              {
+                "name": "languageCode"
+              },
+              {
+                "name": "voiceId"
+              },
+              {
+                "name": "engine"
+              },
+              {
+                "name": "override",
+                "type": "boolean"
+              },
+              {
+                "name": "id3",
+                "type": "object"
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          32,
+          0
+        ],
+        "id": "0e424c48-ae3a-4736-9205-b32a145b6b44",
+        "name": "Polly Input"
+      }
+    ],
+    "connections": {
+      "Call Polly ID3": {
+        "main": [
+          [],
+          []
+        ]
+      },
+      "Polly Input": {
+        "main": [
+          [
+            {
+              "node": "Call Polly ID3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {
+      "Polly Input": [
+        {
+          "key": "samples/sub-workflow-output.mp3",
+          "text": "<speak>Hello. <break time=\"1s\"/> This is <prosody rate=\"slow\">Amazon Polly</prosody>.</speak>",
+          "languageCode": "en-US",
+          "voiceId": "Matthew",
+          "engine": "standard",
+          "override": true,
+          "id3": {
+            "title": "Hello",
+            "artist": "Amazon Polly",
+            "album": "Samples Polly-ID3",
+            "year": "2025",
+            "genre": "Development",
+            "artwork": "https://img.pokemondb.net/artwork/jigglypuff.jpg",
+            "track": "1"
+          }
+        }
+      ]
+    },
+    "meta": {
+      "templateCredsSetupCompleted": true,
+      "instanceId": "37d0f4e3a1d8e5a7856c8b6b5dc74d3d98308d5a5fb9327f62a59809ee0e9f44"
+    }
+}
