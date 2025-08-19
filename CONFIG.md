@@ -10,7 +10,7 @@ This document describes all the environment variables used in the Polly ID3 Tag 
 |----------|---------------|-------------|------|
 | `VOICE_ID` | `Lea` | AWS Polly voice ID to use for speech synthesis | `VoiceId` |
 | `LANGUAGE_CODE` | `fr-FR` | Language code for speech synthesis | `LanguageCode` |
-| `POLLY_ENGINE` | `standard` | Polly engine type | `'standard' \| 'neural' \| 'generative'` |
+| `POLLY_ENGINE` | `generative` | Polly engine type | `'standard' \| 'neural' \| 'generative'` |
 | `TEXT_TYPE` | `text` | Type of text input | `'ssml' \| 'text'` |
 
 ### AWS Services Configuration
@@ -58,7 +58,7 @@ provider:
     LANGUAGE_CODE: ${env:LANGUAGE_CODE, 'fr-FR'}
     SNS_TOPIC_ARN: 
       Fn::GetAtt: [PollyTaskCompletedTopic, TopicArn]
-    POLLY_ENGINE: ${env:POLLY_ENGINE, 'standard'}
+    POLLY_ENGINE: ${env:POLLY_ENGINE, 'generative'}
     TEXT_TYPE: ${env:TEXT_TYPE, 'text'}
     MAX_RETRY_ATTEMPTS: ${env:MAX_RETRY_ATTEMPTS, '3'}
 ```
@@ -73,6 +73,38 @@ const voiceId = (process.env.VOICE_ID || 'Lea') as VoiceId;
 const maxRetryAttempts = parseInt(process.env.MAX_RETRY_ATTEMPTS || '3', 10);
 const timeout = parseInt(process.env.TIMEOUT || '120', 10);
 const memorySize = parseInt(process.env.MEMORY_SIZE || '512', 10);
+```
+
+## Task Status Monitoring
+
+The Lambda function returns a task ID that can be used to monitor the synthesis progress:
+
+### Response Format
+```json
+{
+  "statusCode": 200,
+  "message": "Speech synthesis task started",
+  "taskId": "8bb55580-e47c-4ea4-b1e8-aa71a4c7503b",
+  "s3Location": "s3://your-bucket/test.mp3",
+  "taskStatus": "scheduled",
+  "checkTaskStatusCommand": "aws --no-cli-pager --output text polly get-speech-synthesis-task --task-id 8bb55580-e47c-4ea4-b1e8-aa71a4c7503b --query SynthesisTask.TaskStatus",
+  "syncBucketCommand": "aws s3 sync s3://your-bucket .bucket"
+}
+```
+
+### Task Status Values
+- `scheduled`: Task is queued for processing
+- `in_progress`: Task is currently being processed
+- `completed`: Task completed successfully
+- `failed`: Task failed with an error
+
+### Monitoring Commands
+```bash
+# Check task status
+aws --no-cli-pager --output text polly get-speech-synthesis-task --task-id YOUR_TASK_ID --query SynthesisTask.TaskStatus
+
+# Sync files when completed
+npm run sync-bucket
 ```
 
 ## Lambda Functions

@@ -55,7 +55,7 @@ npm run invoke -- --data '{
 }'
 
 # Get the taskId and the taskStatus from the JSON response
-# sample response:
+# Sample response:
 # {
 #    "statusCode": 200,
 #    "message": "Speech synthesis task started",
@@ -66,11 +66,11 @@ npm run invoke -- --data '{
 #    "syncBucketCommand": "aws s3 sync s3://polly-id3-bucket .bucket"
 #}
 
-# As you can see, the checkTaskStatusCommand is the comand you need to run to check the translation task status
-#
+# Check the task status using the provided command
+# aws --no-cli-pager --output text polly get-speech-synthesis-task --task-id YOUR_TASK_ID --query SynthesisTask.TaskStatus
 
-# Once the translation task status is completed,
-# Sync files from S3 bucket to local directory when statuus is completed
+# Once the task status is "completed",
+# Sync files from S3 bucket to local directory
 npm run sync-bucket
 
 # List downloaded files

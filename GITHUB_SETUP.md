@@ -82,7 +82,7 @@ Set these in your repository under **Settings → Secrets and variables → Acti
 | `SNS_TOPIC_ARN` | SNS topic ARN | Auto-generated |
 | `VOICE_ID` | Polly voice ID | `Lea`, `Matthew`, `Joanna` |
 | `LANGUAGE_CODE` | Language code | `fr-FR`, `en-US`, `es-ES` |
-| `POLLY_ENGINE` | Polly engine | `standard`, `neural`, `generative` |
+| `POLLY_ENGINE` | Polly engine | `generative`, `neural`, `standard` |
 | `TEXT_TYPE` | Text type | `ssml`, `text` |
 | `MAX_RETRY_ATTEMPTS` | Retry attempts | `3`, `5`, `10` |
 | `AWS_REGION` | AWS region | `us-east-1`, `eu-west-1` |
@@ -153,7 +153,7 @@ STAGE=dev
 S3_BUCKET_NAME=my-audio-bucket
 VOICE_ID=Lea
 LANGUAGE_CODE=fr-FR
-POLLY_ENGINE=standard
+POLLY_ENGINE=generative
 TEXT_TYPE=text
 MAX_RETRY_ATTEMPTS=3
 AWS_REGION=us-east-1
@@ -229,7 +229,7 @@ STAGE=dev
 S3_BUCKET_NAME=my-audio-bucket-dev
 VOICE_ID=Lea
 LANGUAGE_CODE=fr-FR
-POLLY_ENGINE=standard
+POLLY_ENGINE=generative
 TEXT_TYPE=text
 MAX_RETRY_ATTEMPTS=2
 AWS_REGION=us-east-1

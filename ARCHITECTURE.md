@@ -39,8 +39,8 @@ The Polly ID3 Tag Manager is a serverless application built on AWS that automati
 #### `id3.handler`
 - **Purpose**: Initiates text-to-speech synthesis with ID3 metadata
 - **Trigger**: Direct Lambda invocation via AWS SDK
-- **Input**: `{ text: string, key: string, id3?: ID3Metadata, ... }`
-- **Output**: Task ID and status
+- **Input**: `{ text: string, key: string, id3?: ID3Metadata, override?: boolean, ... }`
+- **Output**: Task ID, status, and monitoring commands
 - **Timeout**: Configurable (default: 120 seconds)
 - **Memory**: Configurable (default: 512 MB)
 
@@ -83,11 +83,13 @@ The Polly ID3 Tag Manager is a serverless application built on AWS that automati
 ```
 1. Client Request → AWS SDK → Lambda (id3.handler)
 2. Lambda → AWS Polly (StartSpeechSynthesisTask)
-3. AWS Polly → S3 (Audio file)
-4. AWS Polly → SNS (Task completion notification)
-5. SNS → Lambda (id3.pollyTaskCompleted)
-6. Lambda → S3 (Apply ID3 tags)
-7. Lambda → Client (Success response)
+3. Lambda → Client (Task ID and monitoring commands)
+4. AWS Polly → S3 (Audio file)
+5. AWS Polly → SNS (Task completion notification)
+6. SNS → Lambda (id3.pollyTaskCompleted)
+7. Lambda → S3 (Apply ID3 tags)
+8. Client → AWS CLI → Check task status
+9. Client → npm run sync-bucket → Download files
 ```
 
 ### 2. Metadata Update Flow
