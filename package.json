@@ -1,11 +1,15 @@
 {
   "scripts": {
     "deploy:local": "node --env-file=.env.local scripts/deploy.js",
+    "invoke": "env-cmd -f .env.local npx serverless invoke -f id3",
+    "wait-for-task-completed": "env-cmd -f .env.local bash scripts/wait-for-task-completed.sh",
+    "sync-bucket": "env-cmd -f .env.local bash scripts/sync-bucket.sh",
     "deploy": "node scripts/deploy.js",
     "remove": "npx serverless remove --stage dev"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.152",
+    "env-cmd": "^10.1.0",
     "serverless-plugin-typescript": "^2.1.5",
     "typescript": "^5.9.2"
   },

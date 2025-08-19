@@ -125,7 +125,7 @@ export class ID3TagProcessor {
    * @param metadata - The metadata to apply as ID3 tags
    * @returns Buffer with ID3 tags applied
    */
-  async applyTags(mp3Buffer: Buffer, metadata: ID3Metadata): Promise<Buffer> {
+  async applyTags(audioBuffer: Buffer, metadata: ID3Metadata): Promise<Buffer> {
     try {
       this.logger.info('Applying ID3 tags', { metadata });
 
@@ -133,10 +133,10 @@ export class ID3TagProcessor {
       const id3Tags = await this.convertToID3Format(metadata);
 
       // Apply tags to the MP3 buffer
-      const taggedBuffer = NodeID3.write(id3Tags, mp3Buffer);
+      const taggedBuffer = NodeID3.write(id3Tags, audioBuffer);
 
       if (!taggedBuffer) {
-        throw new Error('Failed to write ID3 tags to MP3');
+        throw new Error('Failed to write ID3 tags to Audio');
       }
 
       this.logger.info('Successfully applied ID3 tags');

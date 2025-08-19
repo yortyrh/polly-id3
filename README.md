@@ -34,40 +34,47 @@ npm run deploy:local
 
 ### Test the Lambda Function
 
-After deployment, test the function directly using AWS CLI:
+After deployment, test the function using npm scripts:
 
 ```bash
 # Test basic text-to-speech
-aws lambda invoke \
-  --function-name polly-id3-dev-id3 \
-  --payload '{"text":"Hello, this is a test.","key":"test.mp3"}' \
-  response.json
+npm run invoke -- --data '{"text":"Hello, this is a test.","key":"test.mp3"}'
 
 # Test with ID3 metadata
-aws lambda invoke \
-  --function-name polly-id3-dev-id3 \
-  --payload '{
-    "text":"Hello, this is a test with metadata.",
-    "key":"test-with-metadata.mp3",
-    "id3": {
-      "title": "Test Audio",
-      "artist": "AI Voice",
-      "album": "Test Album",
-      "year": "2024",
-      "genre": "Test"
-    }
-  }' \
-  response.json
+npm run invoke -- --data '{
+  "text":"Hello, this is a test with metadata.",
+  "key":"test-with-metadata.mp3",
+  "override": true,
+  "id3": {
+    "title": "Test Audio",
+    "artist": "AI Voice",
+    "album": "Test Album",
+    "year": "2024",
+    "genre": "Test"
+  }
+}'
 
-# Check the response
-cat response.json
+# Get the taskId and the taskStatus from the JSON response
+# Sample response:
+# {
+#    "statusCode": 200,
+#    "message": "Speech synthesis task started",
+#    "taskId": "8bb55580-e47c-4ea4-b1e8-aa71a4c7503b",
+#    "s3Location": "s3://polly-id3-bucket/test-with-metadata.mp3",
+#    "taskStatus": "scheduled",
+#    "checkTaskStatusCommand": "aws --no-cli-pager --output text polly get-speech-synthesis-task --task-id 8bb55580-e47c-4ea4-b1e8-aa71a4c7503b --query SynthesisTask.TaskStatus",
+#    "syncBucketCommand": "aws s3 sync s3://polly-id3-bucket .bucket"
+#}
 
-# Copy the generated file from S3 (replace with your bucket name)
-aws s3 cp s3://your-bucket-name/test.mp3 ./downloaded-test.mp3
-aws s3 cp s3://your-bucket-name/test-with-metadata.mp3 ./downloaded-test-with-metadata.mp3
+# Check the task status using the provided command
+# aws --no-cli-pager --output text polly get-speech-synthesis-task --task-id YOUR_TASK_ID --query SynthesisTask.TaskStatus
 
-# List files in your S3 bucket
-aws s3 ls s3://your-bucket-name/
+# Once the task status is "completed",
+# Sync files from S3 bucket to local directory
+npm run sync-bucket
+
+# List downloaded files
+ls -la .bucket/
 ```
 
 ## n8n Integration
@@ -89,6 +96,9 @@ A complete workflow that generates French language learning content using OpenAI
 
 [Download French Class Workflow](examples/n8n/french-class.json)
 
+![French Class Workflow](examples/n8n/french-class.png)
+
+
 ### Example 2: Simple Sub-Workflow
 
 A reusable sub-workflow for basic text-to-speech conversion:
@@ -103,6 +113,7 @@ A reusable sub-workflow for basic text-to-speech conversion:
 - Simple integration into larger workflows
 
 [Download Sub-Workflow](examples/n8n/sub-workflow.json)
+![Sub-Workflow](examples/n8n/sub-workflow.png)
 
 ### Sample Output
 
@@ -132,7 +143,7 @@ Both workflows generate MP3 files with complete ID3 metadata:
 |----------|---------|-------------|
 | `VOICE_ID` | `Lea` | Polly voice ID |
 | `LANGUAGE_CODE` | `fr-FR` | Language code |
-| `POLLY_ENGINE` | `standard` | Polly engine type |
+| `POLLY_ENGINE` | `generative` | Polly engine type |
 | `TEXT_TYPE` | `text` | Text input type |
 
 ## Setup Guides
@@ -148,6 +159,7 @@ Both workflows generate MP3 files with complete ID3 metadata:
 - **Processing Time**: Up to 15 minutes for long audio files
 - **Voice Availability**: Limited to AWS Polly supported voices
 - **Format Support**: MP3, OGG, PCM only
+- **ID3 Support**: MP3 only
 
 ## FAQ
 
