@@ -102,6 +102,7 @@ Both workflows generate MP3 files with complete ID3 metadata:
 - **[AWS Setup](AWS_SETUP.md)** - Complete AWS account configuration
 - **[GitHub Actions](GITHUB_SETUP.md)** - CI/CD deployment setup
 - **[Configuration](CONFIG.md)** - Detailed configuration options
+- **[Architecture](ARCHITECTURE.md)** - System design and components
 
 ## Limitations
 
