@@ -32,6 +32,44 @@ cp env.local.example .env.local
 npm run deploy:local
 ```
 
+### Test the Lambda Function
+
+After deployment, test the function directly using AWS CLI:
+
+```bash
+# Test basic text-to-speech
+aws lambda invoke \
+  --function-name polly-id3-dev-id3 \
+  --payload '{"text":"Hello, this is a test.","key":"test.mp3"}' \
+  response.json
+
+# Test with ID3 metadata
+aws lambda invoke \
+  --function-name polly-id3-dev-id3 \
+  --payload '{
+    "text":"Hello, this is a test with metadata.",
+    "key":"test-with-metadata.mp3",
+    "id3": {
+      "title": "Test Audio",
+      "artist": "AI Voice",
+      "album": "Test Album",
+      "year": "2024",
+      "genre": "Test"
+    }
+  }' \
+  response.json
+
+# Check the response
+cat response.json
+
+# Copy the generated file from S3 (replace with your bucket name)
+aws s3 cp s3://your-bucket-name/test.mp3 ./downloaded-test.mp3
+aws s3 cp s3://your-bucket-name/test-with-metadata.mp3 ./downloaded-test-with-metadata.mp3
+
+# List files in your S3 bucket
+aws s3 ls s3://your-bucket-name/
+```
+
 ## n8n Integration
 
 ### Example 1: French Class Generator
