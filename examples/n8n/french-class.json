@@ -1,240 +1,377 @@
 {
     "nodes": [
-        {
+      {
         "parameters": {
-            "modelId": {
+          "modelId": {
             "__rl": true,
             "value": "gpt-4o-mini",
             "mode": "list",
             "cachedResultName": "GPT-4O-MINI"
-            },
-            "messages": {
+          },
+          "messages": {
             "values": [
-                {
+              {
                 "content": "=Reçois un texte en français (argumentatif ou liste d’arguments).\n\nGénère un titre résumant le thème.\n\nExtrait le vocabulaire essentiel pour argumenter sur ce sujet et ajoute du vocabulaire pertinent.\n\nPour chaque mot important, fournis une définition simple adaptée à un étudiant avancé de français.\n\nCrée 10 phrases courtes (≤5 secondes à répéter) en utilisant ce vocabulaire.\n\nProduit une sortie au format suivant :\n\ntitle: titre du thème\n\nssml: script SSML complet qui inclut :\n\nIntroduction du thème.\n\nPrésentation du vocabulaire avec définitions.\n\nExplication à l’étudiant qu’il va entendre 10 phrases et qu’il doit les répéter.\n\nLecture des 10 phrases avec un silence de 10 secondes après chacune (<break time=\"10s\"/>).",
                 "role": "system"
-                },
-                {
+              },
+              {
                 "content": "={{ $json.text }}"
-                }
+              }
             ]
-            },
-            "jsonOutput": true,
-            "options": {}
+          },
+          "jsonOutput": true,
+          "options": {}
         },
         "type": "@n8n/n8n-nodes-langchain.openAi",
         "typeVersion": 1.8,
         "position": [
-            256,
-            0
+          -16,
+          0
         ],
         "id": "2cc40799-68c8-414f-a911-d2881e7cd9e0",
         "name": "Message a model",
-        "retryOnFail": true,
+        "retryOnFail": false,
         "waitBetweenTries": 2000,
         "credentials": {
-            "openAiApi": {
+          "openAiApi": {
             "id": "EW0CbNCU5ae3TmVS",
             "name": "OpenAi account"
-            }
-        },
-        "onError": "continueErrorOutput"
-        },
-        {
+          }
+        }
+      },
+      {
         "parameters": {
-            "function": "arn:aws:lambda:us-east-1:123456789012:function:polly-id3-dev-id3",
-            "payload": "={{ JSON.stringify($json, null, 2) }}"
-        },
-        "type": "n8n-nodes-base.awsLambda",
-        "typeVersion": 1,
-        "position": [
-            1264,
-            -16
-        ],
-        "id": "542e4cba-a950-4423-a318-0e5ce49135b1",
-        "name": "AWS Lambda",
-        "retryOnFail": true,
-        "waitBetweenTries": 3000,
-        "credentials": {
-            "aws": {
-            "id": "NNfowCT8SFlAf8xW",
-            "name": "AWS account"
-            }
-        },
-        "onError": "continueErrorOutput"
-        },
-        {
-        "parameters": {
-            "assignments": {
-            "assignments": [
-                {
-                "id": "3021ba5b-5392-4a84-91d8-cac7e25f8a58",
-                "name": "key",
-                "value": "samples/french-class-output.mp3",
-                "type": "string"
-                },
-                {
-                "id": "7360a163-2321-42e8-88db-ad05f7c0a334",
-                "name": "text",
-                "value": "={{ $json.message.content.ssml }}",
-                "type": "string"
-                },
-                {
-                "id": "7bde97f7-975d-4c83-ab61-57684825b95d",
-                "name": "languageCode",
-                "value": "fr-FR",
-                "type": "string"
-                },
-                {
-                "id": "dcdfa5d3-e1db-4f15-8fe7-6a6c191160f3",
-                "name": "voiceId",
-                "value": "Lea",
-                "type": "string"
-                },
-                {
-                "id": "983722cf-0ca6-4ab4-8d30-5fa2bff6f237",
-                "name": "engine",
-                "value": "generative",
-                "type": "string"
-                },
-                {
-                "id": "38b752a3-5d92-4a94-bffd-ce653d112f1e",
-                "name": "override",
-                "value": true,
-                "type": "boolean"
-                },
-                {
-                "id": "f5b24157-ac1e-4559-8b13-f095ab3536ff",
-                "name": "id3",
-                "value": "={{ \n{\n  \"title\": $json.message.content.title,\n  \"artist\": \"Amazon Polly\",\n  \"album\": \"Samples Polly-ID3\",\n  \"year\": new Date().getFullYear(),\n  \"genre\": \"Development\",\n  \"artwork\": \"https://img.pokemondb.net/artwork/bulbasaur.jpg\",\n  \"track\": \"1\"\n}\n}}",
-                "type": "object"
-                }
-            ]
-            },
-            "options": {}
-        },
-        "type": "n8n-nodes-base.set",
-        "typeVersion": 3.4,
-        "position": [
-            816,
-            -16
-        ],
-        "id": "1acde1b3-5a43-42fb-b707-17e6dea0f39b",
-        "name": "Edit Fields"
-        },
-        {
-        "parameters": {
-            "formTitle": "Generate French Class",
-            "formFields": {
+          "formTitle": "Generate French Class",
+          "formFields": {
             "values": [
-                {
+              {
                 "fieldLabel": "text",
                 "fieldType": "textarea",
                 "requiredField": true
-                }
+              }
             ]
-            },
-            "options": {}
+          },
+          "options": {}
         },
         "type": "n8n-nodes-base.formTrigger",
         "typeVersion": 2.2,
         "position": [
-            -176,
-            0
+          -176,
+          0
         ],
         "id": "f9da2b74-fa08-4630-86d8-85e23760ae3f",
         "name": "Generate French Class Form",
         "webhookId": "99341d14-2cc0-4018-832e-9e397c5befb9"
+      },
+      {
+        "parameters": {
+          "bucketName": "={{ $('Call Polly ID3').item.json.result.s3Location.split('/')[2] }}",
+          "fileKey": "={{ $('Polly Input').item.json.key }}"
+        },
+        "type": "n8n-nodes-base.awsS3",
+        "typeVersion": 2,
+        "position": [
+          528,
+          224
+        ],
+        "id": "6dac5303-4fe5-460b-a8fc-f1524daf51af",
+        "name": "Download MP3",
+        "credentials": {
+          "aws": {
+            "id": "NNfowCT8SFlAf8xW",
+            "name": "AWS account"
+          }
         }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "8e3bb535-e8ec-4566-9c25-d989aab6cdcd",
+                "leftValue": "={{ $json.result }}",
+                "rightValue": "completed",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          288,
+          288
+        ],
+        "id": "1b7abddd-a1c7-4aec-b973-3069b92ae41d",
+        "name": "Is Completed?"
+      },
+      {
+        "parameters": {
+          "amount": 4
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          -160,
+          288
+        ],
+        "id": "9f90e8c5-5afc-47d2-802b-c00cf86ea153",
+        "name": "Wait 4s",
+        "webhookId": "5071ac3f-45de-4a16-b88c-5e618af865c4"
+      },
+      {
+        "parameters": {
+          "function": "arn:aws:lambda:us-east-1:123456789012:function:polly-id3-dev-checkTaskStatus",
+          "payload": "={{ JSON.stringify({taskId:$('Call Polly ID3').item.json.result.taskId}) }}"
+        },
+        "type": "n8n-nodes-base.awsLambda",
+        "typeVersion": 1,
+        "position": [
+          64,
+          288
+        ],
+        "id": "dda9679c-cc2b-4ee9-adc9-9fdb48cb49c0",
+        "name": "checkTaskStatus",
+        "credentials": {
+          "aws": {
+            "id": "NNfowCT8SFlAf8xW",
+            "name": "AWS account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "function": "arn:aws:lambda:us-east-1:123456789012:function:polly-id3-dev-id3",
+          "payload": "={{ JSON.stringify($json, null, 2) }}"
+        },
+        "type": "n8n-nodes-base.awsLambda",
+        "typeVersion": 1,
+        "position": [
+          544,
+          0
+        ],
+        "id": "542e4cba-a950-4423-a318-0e5ce49135b1",
+        "name": "Call Polly ID3",
+        "retryOnFail": false,
+        "waitBetweenTries": 3000,
+        "credentials": {
+          "aws": {
+            "id": "NNfowCT8SFlAf8xW",
+            "name": "AWS account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "3021ba5b-5392-4a84-91d8-cac7e25f8a58",
+                "name": "key",
+                "value": "samples/french-class-output.mp3",
+                "type": "string"
+              },
+              {
+                "id": "7360a163-2321-42e8-88db-ad05f7c0a334",
+                "name": "text",
+                "value": "={{ $json.message.content.ssml }}",
+                "type": "string"
+              },
+              {
+                "id": "7bde97f7-975d-4c83-ab61-57684825b95d",
+                "name": "languageCode",
+                "value": "fr-FR",
+                "type": "string"
+              },
+              {
+                "id": "dcdfa5d3-e1db-4f15-8fe7-6a6c191160f3",
+                "name": "voiceId",
+                "value": "Lea",
+                "type": "string"
+              },
+              {
+                "id": "983722cf-0ca6-4ab4-8d30-5fa2bff6f237",
+                "name": "engine",
+                "value": "standard",
+                "type": "string"
+              },
+              {
+                "id": "38b752a3-5d92-4a94-bffd-ce653d112f1e",
+                "name": "override",
+                "value": true,
+                "type": "boolean"
+              },
+              {
+                "id": "f5b24157-ac1e-4559-8b13-f095ab3536ff",
+                "name": "id3",
+                "value": "={{ \n{\n  \"title\": $json.message.content.title,\n  \"artist\": \"Amazon Polly\",\n  \"album\": \"Samples Polly-ID3\",\n  \"year\": new Date().getFullYear(),\n  \"genre\": \"Development\",\n  \"artwork\": \"https://img.pokemondb.net/artwork/bulbasaur.jpg\",\n  \"track\": \"1\"\n}\n}}",
+                "type": "object"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          352,
+          0
+        ],
+        "id": "1acde1b3-5a43-42fb-b707-17e6dea0f39b",
+        "name": "Polly Input"
+      },
+      {
+        "parameters": {
+          "amount": 4
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          528,
+          416
+        ],
+        "id": "5c0013ed-1ad9-4aae-95ea-02ceae0186de",
+        "name": "Wait 4s1",
+        "webhookId": "c280d52d-0bf1-4be7-bc5c-e0c1d39a1121"
+      }
     ],
     "connections": {
-        "Message a model": {
+      "Message a model": {
         "main": [
-            [
+          [
             {
-                "node": "Edit Fields",
-                "type": "main",
-                "index": 0
+              "node": "Polly Input",
+              "type": "main",
+              "index": 0
             }
-            ],
-            []
+          ],
+          []
         ]
-        },
-        "AWS Lambda": {
+      },
+      "Generate French Class Form": {
         "main": [
-            [],
-            []
-        ]
-        },
-        "Edit Fields": {
-        "main": [
-            [
+          [
             {
-                "node": "AWS Lambda",
-                "type": "main",
-                "index": 0
+              "node": "Message a model",
+              "type": "main",
+              "index": 0
             }
-            ]
+          ]
         ]
-        },
-        "Generate French Class Form": {
+      },
+      "Is Completed?": {
         "main": [
-            [
+          [
             {
-                "node": "Message a model",
-                "type": "main",
-                "index": 0
+              "node": "Download MP3",
+              "type": "main",
+              "index": 0
             }
-            ]
+          ],
+          [
+            {
+              "node": "Wait 4s1",
+              "type": "main",
+              "index": 0
+            }
+          ]
         ]
-        }
+      },
+      "Wait 4s": {
+        "main": [
+          [
+            {
+              "node": "checkTaskStatus",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "checkTaskStatus": {
+        "main": [
+          [
+            {
+              "node": "Is Completed?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call Polly ID3": {
+        "main": [
+          [
+            {
+              "node": "Wait 4s",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Polly Input": {
+        "main": [
+          [
+            {
+              "node": "Call Polly ID3",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait 4s1": {
+        "main": [
+          [
+            {
+              "node": "checkTaskStatus",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
     },
     "pinData": {
-        "Message a model": [
+      "Message a model": [
         {
-            "index": 0,
-            "message": {
+          "index": 0,
+          "message": {
             "role": "assistant",
             "content": {
-                "title": "Les Énergies Renouvelables",
-                "ssml": "<speak>Bienvenue dans notre discussion sur les énergies renouvelables. Ce sujet est essentiel car ces énergies sont cruciales pour notre avenir. Nous allons explorer quelques mots importants qui vous aideront à comprendre ce thème. <break time='2s'/> 1. Énergies renouvelables : C'est de l'énergie qui provient de sources naturellement reconstituées, comme le soleil ou le vent. <break time='2s'/> 2. Dépendance : Cela signifie être en état de compter sur quelque chose d'autre pour ses besoins. <break time='2s'/> 3. Pollution : C'est la contamination de l'air, de l'eau ou du sol qui peut nuire à la santé et à l'environnement. <break time='2s'/> 4. Changement climatique : Cela fait référence aux modifications importantes du climat de la Terre, souvent dues à l'activité humaine. <break time='2s'/> 5. Ressources naturelles : Ce sont des matériaux et de l'énergie que l'on trouve dans la nature, comme le pétrole ou le charbon. <break time='2s'/> 6. Investissement : C'est une dépense faite dans l'espoir d'obtenir un retour futur, comme des bénéfices. <break time='2s'/> 7. Technologies spécifiques : Ce sont des outils ou des méthodes précises utilisés dans un domaine, comme l'énergie. <break time='2s'/> 8. Ensoleillement : C'est la quantité de lumière solaire reçue à un endroit donné. <break time='2s'/> 9. Éoliennes : Ce sont des turbines qui convertissent l'énergie du vent en électricité. <break time='2s'/> 10. Faune : Cela désigne les animaux et les êtres vivants d'une région. <break time='2s'/>  Vous allez maintenant entendre dix phrases. Répétez-les après chaque pause de dix secondes. <break time='2s'/> 1. Les énergies renouvelables sont essentielles pour réduire notre dépendance aux énergies fossiles. <break time='10s'/> 2. L'énergie solaire aide à préserver les ressources naturelles. <break time='10s'/> 3. Les énergies renouvelables diminuent la pollution de l'air et de l'eau. <break time='10s'/> 4. L'énergie éolienne est bénéfique pour l'environnement. <break time='10s'/> 5. Ces énergies jouent un rôle clé dans la lutte contre le changement climatique. <break time='10s'/> 6. L'énergie hydraulique est moins polluante que le gaz naturel. <break time='10s'/> 7. Le développement des énergies renouvelables crée des emplois locaux. <break time='10s'/> 8. Les panneaux solaires nécessitent un investissement initial important. <break time='10s'/> 9. L'énergie éolienne dépend des conditions météorologiques. <break time='10s'/> 10. Il faut protéger la faune des impacts des éoliennes. <break time='10s'/> </speak>"
+              "title": "Les Énergies Renouvelables",
+              "ssml": "<speak>Bienvenue dans notre discussion sur les énergies renouvelables. Ce sujet est essentiel car ces énergies sont cruciales pour notre avenir. Nous allons explorer quelques mots importants qui vous aideront à comprendre ce thème. <break time='2s'/> 1. Énergies renouvelables : C'est de l'énergie qui provient de sources naturellement reconstituées, comme le soleil ou le vent. <break time='2s'/> 2. Dépendance : Cela signifie être en état de compter sur quelque chose d'autre pour ses besoins. <break time='2s'/> 3. Pollution : C'est la contamination de l'air, de l'eau ou du sol qui peut nuire à la santé et à l'environnement. <break time='2s'/> 4. Changement climatique : Cela fait référence aux modifications importantes du climat de la Terre, souvent dues à l'activité humaine. <break time='2s'/> 5. Ressources naturelles : Ce sont des matériaux et de l'énergie que l'on trouve dans la nature, comme le pétrole ou le charbon. <break time='2s'/> 6. Investissement : C'est une dépense faite dans l'espoir d'obtenir un retour futur, comme des bénéfices. <break time='2s'/> 7. Technologies spécifiques : Ce sont des outils ou des méthodes précises utilisés dans un domaine, comme l'énergie. <break time='2s'/> 8. Ensoleillement : C'est la quantité de lumière solaire reçue à un endroit donné. <break time='2s'/> 9. Éoliennes : Ce sont des turbines qui convertissent l'énergie du vent en électricité. <break time='2s'/> 10. Faune : Cela désigne les animaux et les êtres vivants d'une région. <break time='2s'/>  Vous allez maintenant entendre dix phrases. Répétez-les après chaque pause de dix secondes. <break time='2s'/> 1. Les énergies renouvelables sont essentielles pour réduire notre dépendance aux énergies fossiles. <break time='10s'/> 2. L'énergie solaire aide à préserver les ressources naturelles. <break time='10s'/> 3. Les énergies renouvelables diminuent la pollution de l'air et de l'eau. <break time='10s'/> 4. L'énergie éolienne est bénéfique pour l'environnement. <break time='10s'/> 5. Ces énergies jouent un rôle clé dans la lutte contre le changement climatique. <break time='10s'/> 6. L'énergie hydraulique est moins polluante que le gaz naturel. <break time='10s'/> 7. Le développement des énergies renouvelables crée des emplois locaux. <break time='10s'/> 8. Les panneaux solaires nécessitent un investissement initial important. <break time='10s'/> 9. L'énergie éolienne dépend des conditions météorologiques. <break time='10s'/> 10. Il faut protéger la faune des impacts des éoliennes. <break time='10s'/> </speak>"
             },
             "refusal": null,
             "annotations": []
-            },
-            "logprobs": null,
-            "finish_reason": "stop"
+          },
+          "logprobs": null,
+          "finish_reason": "stop"
         }
-        ],
-        "Edit Fields": [
+      ],
+      "Generate French Class Form": [
         {
-            "key": "samples/french-class-output.mp3",
-            "text": "<speak>Bienvenue dans notre discussion sur les énergies renouvelables. Ce sujet est essentiel car ces énergies sont cruciales pour notre avenir. Nous allons explorer quelques mots importants qui vous aideront à comprendre ce thème. <break time='2s'/> 1. Énergies renouvelables : C'est de l'énergie qui provient de sources naturellement reconstituées, comme le soleil ou le vent. <break time='2s'/> 2. Dépendance : Cela signifie être en état de compter sur quelque chose d'autre pour ses besoins. <break time='2s'/> 3. Pollution : C'est la contamination de l'air, de l'eau ou du sol qui peut nuire à la santé et à l'environnement. <break time='2s'/> 4. Changement climatique : Cela fait référence aux modifications importantes du climat de la Terre, souvent dues à l'activité humaine. <break time='2s'/> 5. Ressources naturelles : Ce sont des matériaux et de l'énergie que l'on trouve dans la nature, comme le pétrole ou le charbon. <break time='2s'/> 6. Investissement : C'est une dépense faite dans l'espoir d'obtenir un retour futur, comme des bénéfices. <break time='2s'/> 7. Technologies spécifiques : Ce sont des outils ou des méthodes précises utilisés dans un domaine, comme l'énergie. <break time='2s'/> 8. Ensoleillement : C'est la quantité de lumière solaire reçue à un endroit donné. <break time='2s'/> 9. Éoliennes : Ce sont des turbines qui convertissent l'énergie du vent en électricité. <break time='2s'/> 10. Faune : Cela désigne les animaux et les êtres vivants d'une région. <break time='2s'/>  Vous allez maintenant entendre dix phrases. Répétez-les après chaque pause de dix secondes. <break time='2s'/> 1. Les énergies renouvelables sont essentielles pour réduire notre dépendance aux énergies fossiles. <break time='10s'/> 2. L'énergie solaire aide à préserver les ressources naturelles. <break time='10s'/> 3. Les énergies renouvelables diminuent la pollution de l'air et de l'eau. <break time='10s'/> 4. L'énergie éolienne est bénéfique pour l'environnement. <break time='10s'/> 5. Ces énergies jouent un rôle clé dans la lutte contre le changement climatique. <break time='10s'/> 6. L'énergie hydraulique est moins polluante que le gaz naturel. <break time='10s'/> 7. Le développement des énergies renouvelables crée des emplois locaux. <break time='10s'/> 8. Les panneaux solaires nécessitent un investissement initial important. <break time='10s'/> 9. L'énergie éolienne dépend des conditions météorologiques. <break time='10s'/> 10. Il faut protéger la faune des impacts des éoliennes. <break time='10s'/> </speak>",
-            "languageCode": "fr-FR",
-            "voiceId": "Lea",
-            "engine": "generative",
-            "override": true,
-            "id3": {
-            "title": "Les Énergies Renouvelables",
-            "artist": "Amazon Polly",
-            "album": "Samples Polly-ID3",
-            "year": 2025,
-            "genre": "Development",
-            "artwork": "https://img.pokemondb.net/artwork/bulbasaur.jpg",
-            "track": "1"
-            }
+          "text": "Les Énergies renouvelables\r\nLes énergies renouvelables sont très importantes car elles permettent de réduire notre dépendance aux énergies fossiles. Par exemple, utiliser l'énergie solaire au lieu du pétrole aide à préserver les ressources naturelles. De plus, elles contribuent à diminuer la pollution de l'air et de l'eau. L'énergie éolienne remplace ainsi le charbon, ce qui est bénéfique pour notre environnement. Elles jouent également un rôle clé dans la lutte contre le changement climatique. L'énergie hydraulique, par exemple, est une alternative au gaz naturel, moins polluante. En outre, le développement des énergies renouvelables crée de nombreux emplois locaux, notamment pour construire et entretenir des installations solaires ou éoliennes. Il faut aussi noter que ces sources d'énergie sont généralement illimitées, comme l'énergie solaire qui est disponible partout dans le monde. Cependant, la mise en place de ces technologies peut être coûteuse, par exemple l'installation de panneaux solaires ou d'éoliennes demande un investissement initial important. Par ailleurs, ces systèmes nécessitent des technologies spécifiques, comme des batteries pour stocker l'énergie solaire ou des transformateurs pour l'énergie hydraulique. Il existe aussi une dépendance aux conditions météorologiques : l'énergie éolienne dépend du vent et l'énergie solaire de l'ensoleillement. De plus, ces installations requièrent souvent une grande surface, notamment pour les panneaux solaires. Enfin, il faut rester vigilant face aux risques pour la faune, comme les impacts possibles des éoliennes sur les oiseaux.",
+          "submittedAt": "2025-08-19T01:38:46.554+02:00",
+          "formMode": "test"
         }
-        ],
-        "Generate French Class Form": [
-        {
-            "text": "Les Énergies renouvelables\r\nLes énergies renouvelables sont très importantes car elles permettent de réduire notre dépendance aux énergies fossiles. Par exemple, utiliser l'énergie solaire au lieu du pétrole aide à préserver les ressources naturelles. De plus, elles contribuent à diminuer la pollution de l'air et de l'eau. L'énergie éolienne remplace ainsi le charbon, ce qui est bénéfique pour notre environnement. Elles jouent également un rôle clé dans la lutte contre le changement climatique. L'énergie hydraulique, par exemple, est une alternative au gaz naturel, moins polluante. En outre, le développement des énergies renouvelables crée de nombreux emplois locaux, notamment pour construire et entretenir des installations solaires ou éoliennes. Il faut aussi noter que ces sources d'énergie sont généralement illimitées, comme l'énergie solaire qui est disponible partout dans le monde. Cependant, la mise en place de ces technologies peut être coûteuse, par exemple l'installation de panneaux solaires ou d'éoliennes demande un investissement initial important. Par ailleurs, ces systèmes nécessitent des technologies spécifiques, comme des batteries pour stocker l'énergie solaire ou des transformateurs pour l'énergie hydraulique. Il existe aussi une dépendance aux conditions météorologiques : l'énergie éolienne dépend du vent et l'énergie solaire de l'ensoleillement. De plus, ces installations requièrent souvent une grande surface, notamment pour les panneaux solaires. Enfin, il faut rester vigilant face aux risques pour la faune, comme les impacts possibles des éoliennes sur les oiseaux.",
-            "submittedAt": "2025-08-19T01:38:46.554+02:00",
-            "formMode": "test"
-        }
-        ]
+      ]
     },
     "meta": {
-        "templateCredsSetupCompleted": true,
-        "instanceId": "37d0f4e3a1d8e5a7856c8b6b5dc74d3d98308d5a5fb9327f62a59809ee0e9f44"
+      "templateCredsSetupCompleted": true,
+      "instanceId": "37d0f4e3a1d8e5a7856c8b6b5dc74d3d98308d5a5fb9327f62a59809ee0e9f44"
     }
 }

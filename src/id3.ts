@@ -2,7 +2,7 @@ import { SNSHandler, SNSEvent, SNSEventRecord } from 'aws-lambda';
 import { ID3Metadata, ID3TagProcessor } from './services/id3TagProcessor';
 import { S3Service } from './services/s3Service';
 import { Logger } from './services/logger';
-import { StartSpeechSynthesisTaskCommand, VoiceId, LanguageCode, Engine, TextType } from "@aws-sdk/client-polly";
+import { StartSpeechSynthesisTaskCommand, VoiceId, LanguageCode, Engine, TextType, GetSpeechSynthesisTaskCommand } from "@aws-sdk/client-polly";
 import { Factory } from './services/Factory';
 
 // Environment variables
@@ -23,19 +23,39 @@ interface PollyTaskCompletedMessage {
 }
 
 /**
+ * This function is used to determine the polly format of the file.
  * .ogg or .oga use ogg_vorbis
  * .mp3 use mp3
- * .pcm use pcm
+ * .pcm or .wav or .aiff use pcm
  */
 const fileNameToPollyFormat = (fileName: string): 'mp3' | 'ogg_vorbis' | 'pcm' | null => {
   if (fileName.endsWith('.ogg') || fileName.endsWith('.oga')) {
     return 'ogg_vorbis';
   }
-  if (fileName.endsWith('.wav') || fileName.endsWith('.aiff')) {
+  if (fileName.endsWith('.wav') || fileName.endsWith('.aiff') || fileName.endsWith('.pcm')) {
     return 'pcm';
   }
   if (fileName.endsWith('.mp3')) {
     return 'mp3';
+  }
+  return null; // there is no polly format for this file extension
+}
+
+/**
+ * This function is used to determine the mime type of the file.
+ * .ogg or .oga use audio/ogg
+ * .mp3 use audio/mpeg
+ * .pcm or .wav or .aiff use audio/pcm
+ */
+const fileNameToMimeType = (fileName: string): 'audio/mpeg' | 'audio/ogg' | 'audio/pcm' | null => {
+  if (fileName.endsWith('.ogg') || fileName.endsWith('.oga')) {
+    return 'audio/ogg';
+  }
+  if (fileName.endsWith('.wav') || fileName.endsWith('.aiff') || fileName.endsWith('.pcm')) {
+    return 'audio/pcm';
+  }
+  if (fileName.endsWith('.mp3')) {
+    return 'audio/mpeg';
   }
   return null; // there is no polly format for this file extension
 }
@@ -106,7 +126,13 @@ type HandlerEvent = {
 
 type HandlerResponse = {
   statusCode: number;
-  body: string;
+  message: string;
+  taskId?: string;
+  s3Location?: string;
+  taskStatus?: string;
+  checkTaskStatusCommand?: string;
+  syncBucketCommand?: string;
+  error?: string;
 }
 
 /**
@@ -133,14 +159,14 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
   if (!text) {
     return {
       statusCode: 400,
-      body: JSON.stringify('Missing required parameters: text, voiceId, outputFormat, or bucketName'),
+      message: 'Missing required parameters: text, voiceId, outputFormat, or bucketName',
     };
   }
 
   if (!key) {
     return {
       statusCode: 400,
-      body: JSON.stringify('Missing required parameters: key'),
+      message: 'Missing required parameters: key',
     };
   }
 
@@ -148,7 +174,7 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
   if (!pollyFormat) {
     return {
       statusCode: 400,
-      body: JSON.stringify('Invalid file extension: ' + key + '. There is no polly format for this file extension.'),
+      message: `Invalid file extension: ${key}. There is no polly format for this file extension.`,
     };
   }
 
@@ -159,10 +185,9 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
     if (existing) {
       return {
         statusCode: 200,
-        body: JSON.stringify({
-          message: 'File already exists',
-          key,
-        }),
+        message: `File already exists: ${key}`,
+        s3Location: `s3://${bucketName}/${key}`,
+        syncBucketCommand: `aws s3 sync s3://${bucketName} .bucket`,
       };
     };
   }
@@ -182,7 +207,6 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
     });
 
     const response = await pollyClient.send(synthesizeSpeechCommand);
-    const s3Location = response.SynthesisTask?.OutputUri;
     const taskKeyPrefix = keyPrefix + '.' + response.SynthesisTask?.TaskId;
     const taskId3Key = taskKeyPrefix + '.json';
 
@@ -193,18 +217,29 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
     }
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        message: 'Speech synthesis task started',
-        taskId: response.SynthesisTask?.TaskId,
-        s3Location: s3Location?.replace(`.${response.SynthesisTask?.TaskId}`, ''),
-        taskStatus: response.SynthesisTask?.TaskStatus
-      }),
+      message: 'Speech synthesis task started',
+      taskId: response.SynthesisTask?.TaskId,
+      s3Location: `s3://${bucketName}/${key}`,
+      taskStatus: response.SynthesisTask?.TaskStatus,
+      checkTaskStatusCommand: `npm run wait-for-task-completed -- ${response.SynthesisTask?.TaskId}`,
     };
   } catch (error) {
     console.error("Error synthesizing speech or uploading to S3:", error);
     throw error;
   }
 };
+
+/**
+ * This function is used to check the status of a speech synthesis task.
+ * @param event - The event object containing the task ID.
+ * @returns The status of the task.
+ */
+export const checkTaskStatus = async (event: {taskId: string}): Promise<string> => {
+  const { taskId } = event;
+  const pollyClient = factory.getOrCreatePollyClient();
+  const response = await pollyClient.send(new GetSpeechSynthesisTaskCommand({ TaskId: taskId }));
+  return response.SynthesisTask?.TaskStatus || 'unknown';
+}
 
 /**
  * This function is used to update the ID3 metadata in the S3 bucket folder.
@@ -294,15 +329,10 @@ async function processSNSEvent(
     logger.info('Polly task details', { pollyTaskId, pollyTaskStatus, outputFormat });
     logger.info('Message', JSON.stringify(message, null, 2));
     
-    if (outputFormat !== 'mp3') {
-      logger.warn('Skipping non-MP3 output format', { outputFormat, pollyTaskId });
+    if (pollyTaskStatus !== 'COMPLETED') {
+      logger.warn('Skipping non-COMPLETED task status', { pollyTaskStatus, pollyTaskId });
       return;
     }
-
-    if (pollyTaskStatus !== 'COMPLETED') {
-        logger.warn('Skipping non-COMPLETED task status', { pollyTaskStatus, pollyTaskId });
-        return;
-      }
 
     // Check if outputUri is present
     if (!message.outputUri) {
@@ -311,22 +341,43 @@ async function processSNSEvent(
     }
 
     // Construct S3 keys based on output Uri,
-    const mp3Key = message.outputUri.split('/').slice(3).join('/');
-    const jsonKey = mp3Key.replace('.mp3', '.json');
+    const audioKey = message.outputUri.split('/').slice(3).join('/');
+    const jsonKey = audioKey.replace(/\.[^.]+$/g, '.json'); // any extension
     const s3Bucket = message.outputUri.split('/')[2];
+    const audioMimeType = fileNameToMimeType(audioKey);
 
-    logger.info('Processing Polly task', { pollyTaskId, mp3Key, jsonKey, s3Bucket });
+    const beforeReturn = async () => {
+      await Promise.all([
+        s3Service.renameFile(s3Bucket, audioKey, audioKey.replace(`.${pollyTaskId}`, '')),
+        s3Service.renameFile(s3Bucket, jsonKey, jsonKey.replace(`.${pollyTaskId}`, ''))
+      ]);
+    }
+
+    if (!audioMimeType) {
+      logger.warn('Invalid audio file extension for ID3 metadata', { audioKey, audioMimeType });
+      await beforeReturn();
+      return;
+    }
+
+    if (audioMimeType !== 'audio/mpeg') {
+      logger.warn('Skipping non-MP3 output format for ID3 metadata', { audioMimeType, audioKey, pollyTaskId });
+      await beforeReturn();
+      return;
+    }
+
+    logger.info('Processing Polly task', { pollyTaskId, audioKey, jsonKey, s3Bucket });
 
     // Check if the JSON file exists
     const jsonExists = await s3Service.fileExists(s3Bucket, jsonKey);
     if (!jsonExists) {
       logger.warn('JSON file does not exist', { jsonKey, s3Bucket });
+      await beforeReturn();
       return;
     }
 
-    // Download MP3 file and JSON metadata
-    const [mp3Buffer, jsonData] = await Promise.all([
-      s3Service.downloadFile(s3Bucket, mp3Key),
+    // Download Audio file and JSON metadata
+    const [audioBuffer, jsonData] = await Promise.all([
+      s3Service.downloadFile(s3Bucket, audioKey),
       s3Service.downloadFile(s3Bucket, jsonKey)
     ]);
 
@@ -335,27 +386,24 @@ async function processSNSEvent(
     logger.info('Retrieved metadata', { metadata });
 
     // Apply ID3 tags
-    const taggedMp3Buffer = await id3Processor.applyTags(mp3Buffer, metadata);
+    const taggedAudioBuffer = await id3Processor.applyTags(audioBuffer, metadata);
 
-    // Upload tagged MP3 back to S3, same file.
+    // Upload tagged audio back to S3, same file.
     await s3Service.uploadFile(
       s3Bucket,
-      mp3Key,
-      taggedMp3Buffer,
-      'audio/mpeg'
+      audioKey,
+      taggedAudioBuffer,
+      audioMimeType
     );
 
     logger.info('Successfully applied ID3 tags', { 
       pollyTaskId, 
-      originalKey: mp3Key, 
-      taggedKey: mp3Key
+      originalKey: audioKey, 
+      taggedKey: audioKey
     });
 
-    // Rename the MP3 and JSON files to remove the .<taskId> from the filename
-    await Promise.all([
-      s3Service.renameFile(s3Bucket, mp3Key, mp3Key.replace(`.${pollyTaskId}`, '')),
-      s3Service.renameFile(s3Bucket, jsonKey, jsonKey.replace(`.${pollyTaskId}`, ''))
-    ]);
+    // Rename the audio and JSON files to remove the .<taskId> from the filename
+    await beforeReturn();
 
   } catch (error) {
     logger.error('Error processing SNS event record', { 

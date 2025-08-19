@@ -56,6 +56,10 @@ functions:
     handler: src/id3.handler
     timeout: ${self:provider.environment.TIMEOUT}
     memorySize: ${self:provider.environment.MEMORY_SIZE}
+  checkTaskStatus:
+    handler: src/id3.checkTaskStatus
+    timeout: ${self:provider.environment.TIMEOUT}
+    memorySize: ${self:provider.environment.MEMORY_SIZE}
   id3PollyTaskCompleted:
     handler: src/id3.pollyTaskCompleted
     timeout: ${self:provider.environment.TIMEOUT}

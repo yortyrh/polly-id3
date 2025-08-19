@@ -2,3 +2,5 @@ node_modules
 .serverless
 .env.local
 .env.*.local
+.env*
+.bucket/
