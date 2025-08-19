@@ -21,7 +21,7 @@ provider:
     LANGUAGE_CODE: ${env:LANGUAGE_CODE, 'fr-FR'}
     SNS_TOPIC_ARN: 
       Fn::GetAtt: [PollyTaskCompletedTopic, TopicArn] # TODO: create a topic in the template
-    POLLY_ENGINE: ${env:POLLY_ENGINE, 'standard'}
+    POLLY_ENGINE: ${env:POLLY_ENGINE, 'generative'}
     TEXT_TYPE: ${env:TEXT_TYPE, 'text'}
     MAX_RETRY_ATTEMPTS: ${env:MAX_RETRY_ATTEMPTS, '3'}
   iamRoleStatements:

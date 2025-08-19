@@ -155,7 +155,7 @@ Initiates text-to-speech synthesis with ID3 metadata.
     "composer": "AWS Polly",
     "albumArtist": "Test Artist",
     "bpm": "120",
-    "picture": "https://example.com/cover.jpg"
+    "artwork": "https://example.com/cover.jpg"
   }
 }
 ```
@@ -181,7 +181,7 @@ Updates ID3 metadata for existing MP3 files in S3.
 | `composer` | Composer name | "AWS Polly" |
 | `albumArtist` | Album artist | "Polly Voice" |
 | `bpm` | Beats per minute | "120" |
-| `picture` | Cover art URL | "https://example.com/cover.jpg" |
+| `artwork` | Cover art URL | "https://example.com/cover.jpg" |
 
 ### Supported Audio Formats
 

@@ -12,11 +12,9 @@ import { Logger } from './logger';
  *   year: '2025',
  *   genre: 'Test Genre',
  *   comment: 'Test Comment',
- *   lyrics: 'Test Lyrics',
  *   composer: 'Test Composer',
  *   albumArtist: 'Test Album Artist',
- *   bpm: '120',
- *   picture: 'https://example.com/image.jpg',
+ *   artwork: 'https://img.pokemondb.net/artwork/large/jigglypuff.jpg',
  *   track: '1',
  *   other: 'Test Other',
  * };
@@ -68,9 +66,9 @@ export interface ID3Metadata {
   bpm?: string | number;
 
   /**
-   * @picture - The picture of the song
+   * @artwork - The artwork of the song
    */
-  picture?: string;
+  artwork?: string;
 
   /**
    * @[key: string] - Any other metadata
@@ -94,7 +92,7 @@ export interface ID3Metadata {
  *   composer: 'Test Composer',
  *   albumArtist: 'Test Album Artist',
  *   bpm: '120',
- *   picture: 'https://example.com/image.jpg',
+ *   artwork: 'https://img.pokemondb.net/artwork/large/jigglypuff.jpg',
  *   track: '1',
  *   other: 'Test Other',
  * });
@@ -170,9 +168,9 @@ export class ID3TagProcessor {
     if (metadata.albumArtist) tags.performerInfo = metadata.albumArtist;
     if (metadata.bpm) tags.bpm = metadata.bpm.toString();
     if (metadata.track) tags.trackNumber = metadata.track.toString();
-    if (metadata.picture) {
+    if (metadata.artwork) {
       try {
-        const { mime, imageBuffer } = await this.imageUrlToBuffer(metadata.picture);
+        const { mime, imageBuffer } = await this.imageUrlToBuffer(metadata.artwork);
         tags.image = {
           mime,
           type: {
@@ -209,7 +207,7 @@ export class ID3TagProcessor {
     const standardFields = [
       'title', 'artist', 'album', 'year', 'track', 'genre',
       'comment', 'lyrics', 'composer', 'albumArtist', 'bpm', 
-      'picture',
+      'artwork',
     ];
     return standardFields.includes(fieldName.toLowerCase());
   }
