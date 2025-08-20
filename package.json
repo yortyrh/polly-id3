@@ -2,7 +2,7 @@
   "scripts": {
     "deploy:local": "node --env-file=.env.local scripts/deploy.js",
     "invoke": "env-cmd -f .env.local npx serverless invoke -f id3",
-    "wait-for-task-completed": "env-cmd -f .env.local bash scripts/wait-for-task-completed.sh",
+    "check-task": "env-cmd -f .env.local npx serverless invoke -f checkTaskStatus",
     "sync-bucket": "env-cmd -f .env.local bash scripts/sync-bucket.sh",
     "deploy": "node scripts/deploy.js",
     "remove": "npx serverless remove --stage dev"
@@ -14,8 +14,10 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.864.0",
     "@aws-sdk/client-polly": "^3.864.0",
     "@aws-sdk/lib-storage": "^3.864.0",
+    "@aws-sdk/util-dynamodb": "^3.868.0",
     "@smithy/util-retry": "^4.0.7",
     "aws-lambda": "^1.0.7",
     "node-id3": "^0.2.9"

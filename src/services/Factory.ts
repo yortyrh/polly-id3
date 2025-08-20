@@ -4,6 +4,7 @@ import { S3 } from "aws-sdk";
 import { S3Service } from "./s3Service";
 import { Logger } from "./logger";
 import { ID3TagProcessor } from "./id3TagProcessor";
+import { DynamoDBService } from "./DynamoDBService";
 import { ConfiguredRetryStrategy } from "@smithy/util-retry";
 
 /**
@@ -101,5 +102,13 @@ export class Factory {
    */
   getOrCreateId3TagProcessor(): ID3TagProcessor {
     return this.get("id3TagProcessor", () => new ID3TagProcessor());
+  }
+
+  /**
+   * Gets an instance of a DynamoDB service
+   * @returns The instance of the DynamoDB service
+   */
+  getOrCreateDynamoDBService(): DynamoDBService {
+    return this.get("dynamoDBService", () => new DynamoDBService());
   }
 }

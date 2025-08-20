@@ -11,6 +11,7 @@ plugins:
 provider:
   name: aws
   runtime: nodejs20.x
+  region: ${env:AWS_REGION, 'us-east-1'}
   environment:
     TIMEOUT: ${env:TIMEOUT, '120'}
     TIMEOUT_BULK: ${env:TIMEOUT_BULK, '900'}
@@ -24,6 +25,7 @@ provider:
     POLLY_ENGINE: ${env:POLLY_ENGINE, 'generative'}
     TEXT_TYPE: ${env:TEXT_TYPE, 'text'}
     MAX_RETRY_ATTEMPTS: ${env:MAX_RETRY_ATTEMPTS, '3'}
+    DYNAMODB_TABLE_NAME: ${env:DYNAMODB_TABLE_NAME, 'polly-id3-tasks'}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -50,7 +52,15 @@ provider:
       Action:
         - "s3:ListBucket"
       Resource: "arn:aws:s3:::${self:provider.environment.S3_BUCKET_NAME}"
-
+    - Effect: Allow
+      Action:
+        - "dynamodb:PutItem"
+        - "dynamodb:GetItem"
+        - "dynamodb:UpdateItem"
+        - "dynamodb:DeleteItem"
+        - "dynamodb:Query"
+        - "dynamodb:Scan"
+      Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_NAME}"
 functions:
   id3:
     handler: src/id3.handler
@@ -79,4 +89,19 @@ resources:
       Type: AWS::SNS::Topic
       Properties:
         TopicName: PollyTaskCompletedTopic
+    
+    PollyId3TasksTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.DYNAMODB_TABLE_NAME}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: taskId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: taskId
+            KeyType: HASH
+        TimeToLiveSpecification:
+          AttributeName: ttl
+          Enabled: true
 
