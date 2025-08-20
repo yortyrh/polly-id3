@@ -1,5 +1,6 @@
 import * as NodeID3 from 'node-id3';
 import { Logger } from './logger';
+import { imageUrlToBuffer } from '../utils';
 
 /**
  * @interface ID3Metadata
@@ -101,25 +102,6 @@ export class ID3TagProcessor {
   private logger = new Logger();
 
   /**
-   * Converts an image URL to a Buffer
-   * @param imageUrl - The URL of the image
-   * @returns The MIME type and image buffer
-   */
-  private  async imageUrlToBuffer(imageUrl: string): Promise<{ mime: string, imageBuffer: Buffer }> {
-    const response = await fetch(imageUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch image: ${response.statusText}`);
-    }
-    const mime = response.headers.get('content-type')!;
-    // check if it is an image
-    if (!mime.startsWith('image/')) {
-      throw new Error(`Invalid image URL: ${imageUrl} - ${mime}`);
-    }
-    const arrayBuffer = await response.arrayBuffer();
-    return { mime, imageBuffer: Buffer.from(arrayBuffer) };
-  }
-
-  /**
    * Applies ID3 tags to an MP3 buffer
    * @param mp3Buffer - The MP3 file as a Buffer
    * @param metadata - The metadata to apply as ID3 tags
@@ -170,7 +152,7 @@ export class ID3TagProcessor {
     if (metadata.track) tags.trackNumber = metadata.track.toString();
     if (metadata.artwork) {
       try {
-        const { mime, imageBuffer } = await this.imageUrlToBuffer(metadata.artwork);
+        const { mime, imageBuffer } = await imageUrlToBuffer(metadata.artwork);
         tags.image = {
           mime,
           type: {

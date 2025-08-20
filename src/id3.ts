@@ -3,16 +3,18 @@ import { ID3Metadata, ID3TagProcessor } from './services/id3TagProcessor';
 import { S3Service } from './services/s3Service';
 import { Logger } from './services/logger';
 import { DynamoDBService } from './services/DynamoDBService';
-import { StartSpeechSynthesisTaskCommand, VoiceId, LanguageCode, Engine, TextType, GetSpeechSynthesisTaskCommand } from "@aws-sdk/client-polly";
+import { StartSpeechSynthesisTaskCommand, VoiceId, LanguageCode, Engine, TextType } from "@aws-sdk/client-polly";
 import { Factory } from './services/Factory';
-
-// Environment variables
-const bucketName = process.env.S3_BUCKET_NAME;
-const defaultVoiceId = (process.env.VOICE_ID || VoiceId.Lea) as VoiceId;
-const defaultLanguageCode = (process.env.LANGUAGE_CODE || LanguageCode.fr_FR) as LanguageCode;
-const snsTopicArn = process.env.SNS_TOPIC_ARN;
-const defaultEngine = (process.env.POLLY_ENGINE || Engine.GENERATIVE) as Engine;
-const defaultTextType = (process.env.TEXT_TYPE || TextType.TEXT) as TextType;
+import { 
+  fileNameToPollyFormat, 
+  fileNameToMimeType, 
+  textToTextType, 
+  getDefaultVoiceId, 
+  getDefaultLanguageCode, 
+  getDefaultEngine,
+  getBucketName, 
+  getSnsTopicArn 
+} from './utils';
 
 const factory = new Factory();
 
@@ -23,62 +25,7 @@ interface PollyTaskCompletedMessage {
   outputUri: string;
 }
 
-/**
- * This function is used to determine the polly format of the file.
- * .ogg or .oga use ogg_vorbis
- * .mp3 use mp3
- * .pcm or .wav or .aiff use pcm
- */
-const fileNameToPollyFormat = (fileName: string): 'mp3' | 'ogg_vorbis' | 'pcm' | null => {
-  if (fileName.endsWith('.ogg') || fileName.endsWith('.oga')) {
-    return 'ogg_vorbis';
-  }
-  if (fileName.endsWith('.wav') || fileName.endsWith('.aiff') || fileName.endsWith('.pcm')) {
-    return 'pcm';
-  }
-  if (fileName.endsWith('.mp3')) {
-    return 'mp3';
-  }
-  return null; // there is no polly format for this file extension
-}
 
-/**
- * This function is used to determine the mime type of the file.
- * .ogg or .oga use audio/ogg
- * .mp3 use audio/mpeg
- * .pcm or .wav or .aiff use audio/pcm
- */
-const fileNameToMimeType = (fileName: string): 'audio/mpeg' | 'audio/ogg' | 'audio/pcm' | null => {
-  if (fileName.endsWith('.ogg') || fileName.endsWith('.oga')) {
-    return 'audio/ogg';
-  }
-  if (fileName.endsWith('.wav') || fileName.endsWith('.aiff') || fileName.endsWith('.pcm')) {
-    return 'audio/pcm';
-  }
-  if (fileName.endsWith('.mp3')) {
-    return 'audio/mpeg';
-  }
-  return null; // there is no polly format for this file extension
-}
-
-/**
- * This function is used to determine the text type of the text.
- * If the text starts with <speak>, return SSML.
- * If the text does not start with <speak>, return TEXT.
- * If the defaultTextType is provided, return the defaultTextType.
- * @param text - The text to determine the text type of.
- * @param defaultTextType - The default text type to return if the text does not start with <speak>.
- * @returns The text type.
- */
-const textToTextType = (text: string, forceTextType?: TextType): TextType => {
-  if (forceTextType) {
-    return forceTextType;
-  }
-  if (text.trim().match(/<speak[^>]*>/)) {
-    return TextType.SSML;
-  }
-  return defaultTextType;
-}
 
 /**
  * This type is used to define the event object for the handler function.
@@ -148,9 +95,9 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
   const {
     text,
     key,
-    languageCode = defaultLanguageCode,
-    voiceId = defaultVoiceId,
-    engine = defaultEngine,
+    languageCode = getDefaultLanguageCode(),
+    voiceId = getDefaultVoiceId(),
+    engine = getDefaultEngine(),
     textType,
     override = false,
     id3 = {} as ID3Metadata,
@@ -181,6 +128,7 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
   const pollyClient = factory.getOrCreatePollyClient();
 
   if (!override) {
+    const bucketName = getBucketName();
     const existing = await s3Service.fileExists(bucketName!, key);
     if (existing) {
       return {
@@ -193,6 +141,8 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
 
   try {
     const keyPrefix = key.replace(/\.[^.]+$/g, '');
+    const bucketName = getBucketName();
+    const snsTopicArn = getSnsTopicArn();
     const synthesizeSpeechCommand = new StartSpeechSynthesisTaskCommand({
       Text: text,
       VoiceId: voiceId,
