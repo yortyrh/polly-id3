@@ -54,20 +54,19 @@ npm run invoke -- --data '{
   }
 }'
 
-# Get the taskId and the taskStatus from the JSON response
+# Get the taskId from the JSON response
 # Sample response:
 # {
 #    "statusCode": 200,
 #    "message": "Speech synthesis task started",
 #    "taskId": "8bb55580-e47c-4ea4-b1e8-aa71a4c7503b",
 #    "s3Location": "s3://polly-id3-bucket/test-with-metadata.mp3",
-#    "taskStatus": "scheduled",
-#    "checkTaskStatusCommand": "aws --no-cli-pager --output text polly get-speech-synthesis-task --task-id 8bb55580-e47c-4ea4-b1e8-aa71a4c7503b --query SynthesisTask.TaskStatus",
+#    "taskStatus": "scheduled"
 #    "syncBucketCommand": "aws s3 sync s3://polly-id3-bucket .bucket"
 #}
 
-# Check the task status using the provided command
-# aws --no-cli-pager --output text polly get-speech-synthesis-task --task-id YOUR_TASK_ID --query SynthesisTask.TaskStatus
+# Check the task status using our DynamoDB tracking
+# npm run check-task -- --data '{"taskId":"8bb55580-e47c-4ea4-b1e8-aa71a4c7503b"}'
 
 # Once the task status is "completed",
 # Sync files from S3 bucket to local directory

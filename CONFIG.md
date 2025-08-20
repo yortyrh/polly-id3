@@ -41,6 +41,7 @@ This document describes all the environment variables used in the Polly ID3 Tag 
 | Variable | Description | Required |
 |----------|-------------|----------|
 | `SERVERLESS_ACCESS_KEY` | Serverless Framework access key for CI/CD | Yes (for CI/CD) |
+| `DYNAMODB_TABLE_NAME` | DynamoDB table name for task tracking | No (default: polly-id3-tasks) |
 
 ## Configuration in serverless.yml
 
@@ -105,6 +106,41 @@ aws --no-cli-pager --output text polly get-speech-synthesis-task --task-id YOUR_
 
 # Sync files when completed
 npm run sync-bucket
+```
+
+## DynamoDB Task Tracking
+
+The application uses DynamoDB to track the complete lifecycle of Polly synthesis tasks:
+
+### Task Status Flow
+1. **polly-scheduled**: Task created when synthesis is initiated
+2. **polly-completed**: Polly SNS notification received, audio file ready
+3. **completed**: ID3 tags applied and files renamed
+4. **failed**: Error occurred during processing
+
+### DynamoDB Table Schema
+- **Primary Key**: `taskId` (String)
+- **TTL**: `ttl` (Number) - Records expire after 7 days
+- **Status Tracking**: `status`, `createdAt`, `updatedAt`
+- **Event Data**: `eventData` (Original request data)
+- **Processing Info**: `pollyTaskId`, `s3Location`, `errorMessage`
+
+### Task Record Example
+```json
+{
+  "taskId": "8bb55580-e47c-4ea4-b1e8-aa71a4c7503b",
+  "status": "completed",
+  "eventData": {
+    "text": "Hello world",
+    "key": "test.mp3",
+    "id3": { "title": "Test" }
+  },
+  "pollyTaskId": "8bb55580-e47c-4ea4-b1e8-aa71a4c7503b",
+  "s3Location": "s3://bucket/test.mp3",
+  "createdAt": "2024-01-01T00:00:00.000Z",
+  "updatedAt": "2024-01-01T00:05:00.000Z",
+  "ttl": 1704067200
+}
 ```
 
 ## Lambda Functions
@@ -187,6 +223,7 @@ Set these in your GitHub repository under Settings → Secrets and variables →
 | `AWS_ACCESS_KEY_ID` | AWS access key ID | Yes |
 | `AWS_SECRET_ACCESS_KEY` | AWS secret access key | Yes |
 | `SERVERLESS_ACCESS_KEY` | Serverless Framework access key | Yes (for CI/CD) |
+| `DYNAMODB_TABLE_NAME` | DynamoDB table name for task tracking | No (default: polly-id3-tasks) |
 
 ### Cache Management
 

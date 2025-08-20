@@ -2,6 +2,7 @@ import { SNSHandler, SNSEvent, SNSEventRecord } from 'aws-lambda';
 import { ID3Metadata, ID3TagProcessor } from './services/id3TagProcessor';
 import { S3Service } from './services/s3Service';
 import { Logger } from './services/logger';
+import { DynamoDBService } from './services/DynamoDBService';
 import { StartSpeechSynthesisTaskCommand, VoiceId, LanguageCode, Engine, TextType, GetSpeechSynthesisTaskCommand } from "@aws-sdk/client-polly";
 import { Factory } from './services/Factory';
 
@@ -130,8 +131,6 @@ type HandlerResponse = {
   taskId?: string;
   s3Location?: string;
   taskStatus?: string;
-  checkTaskStatusCommand?: string;
-  syncBucketCommand?: string;
   error?: string;
 }
 
@@ -145,6 +144,7 @@ type HandlerResponse = {
  */
 export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => {
   const s3Service = factory.getOrCreateS3Service();
+  const dynamoDBService = factory.getOrCreateDynamoDBService();
   const {
     text,
     key,
@@ -187,7 +187,6 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
         statusCode: 200,
         message: `File already exists: ${key}`,
         s3Location: `s3://${bucketName}/${key}`,
-        syncBucketCommand: `aws s3 sync s3://${bucketName} .bucket`,
       };
     };
   }
@@ -207,8 +206,12 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
     });
 
     const response = await pollyClient.send(synthesizeSpeechCommand);
-    const taskKeyPrefix = keyPrefix + '.' + response.SynthesisTask?.TaskId;
+    const taskId = response.SynthesisTask?.TaskId;
+    const taskKeyPrefix = keyPrefix + '.' + taskId;
     const taskId3Key = taskKeyPrefix + '.json';
+
+    // Create task record in DynamoDB
+    await dynamoDBService.createTask(taskId!, event);
 
     console.log("Error synthesizing speech or uploading to S3:", taskId3Key, taskKeyPrefix);
     // upload JSON file to S3 with the object inside id3 if it exists
@@ -218,10 +221,9 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
     return {
       statusCode: 200,
       message: 'Speech synthesis task started',
-      taskId: response.SynthesisTask?.TaskId,
+      taskId: taskId!,
       s3Location: `s3://${bucketName}/${key}`,
       taskStatus: response.SynthesisTask?.TaskStatus,
-      checkTaskStatusCommand: `npm run wait-for-task-completed -- ${response.SynthesisTask?.TaskId}`,
     };
   } catch (error) {
     console.error("Error synthesizing speech or uploading to S3:", error);
@@ -236,9 +238,15 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
  */
 export const checkTaskStatus = async (event: {taskId: string}): Promise<string> => {
   const { taskId } = event;
-  const pollyClient = factory.getOrCreatePollyClient();
-  const response = await pollyClient.send(new GetSpeechSynthesisTaskCommand({ TaskId: taskId }));
-  return response.SynthesisTask?.TaskStatus || 'unknown';
+  const dynamoDBService = factory.getOrCreateDynamoDBService();
+  
+  const taskRecord = await dynamoDBService.getTaskStatus(taskId);
+  
+  if (!taskRecord) {
+    return 'Task not found';
+  }
+
+  return taskRecord.status;
 }
 
 /**
@@ -284,6 +292,7 @@ export const updateId3Metadata = async (event: { s3Bucket: string, folderKey: st
 export const pollyTaskCompleted: SNSHandler = async (event: SNSEvent): Promise<void> => {
   // Initialize services inside the handler to allow proper mocking
   const s3Service = factory.getOrCreateS3Service();
+  const dynamoDBService = factory.getOrCreateDynamoDBService();
   const logger = factory.createLogger();
   const id3Processor = factory.getOrCreateId3TagProcessor();
 
@@ -291,7 +300,7 @@ export const pollyTaskCompleted: SNSHandler = async (event: SNSEvent): Promise<v
     logger.info('Processing SNS event', { recordCount: event.Records.length });
 
     for (const record of event.Records) {
-      await processSNSEvent(record, s3Service, id3Processor, logger);
+      await processSNSEvent(record, s3Service, dynamoDBService, id3Processor, logger);
     }
 
     logger.info('Successfully processed all SNS events');
@@ -314,15 +323,18 @@ export const pollyTaskCompleted: SNSHandler = async (event: SNSEvent): Promise<v
 async function processSNSEvent(
   record: SNSEventRecord, 
   s3Service: S3Service, 
+  dynamoDBService: DynamoDBService,
   id3Processor: ID3TagProcessor, 
   logger: Logger
 ): Promise<void> {
+  let pollyTaskId: string = '';
+  
   try {
     const message = JSON.parse(record.Sns.Message) as PollyTaskCompletedMessage;
     logger.info('Processing SNS message', { messageId: record.Sns.MessageId });
 
     // Extract Polly job details from the message
-    const pollyTaskId = message.taskId;
+    pollyTaskId = message.taskId;
     const pollyTaskStatus = message.taskStatus;
     const outputFormat = String(message.outputFormat).toLowerCase();
 
@@ -333,6 +345,9 @@ async function processSNSEvent(
       logger.warn('Skipping non-COMPLETED task status', { pollyTaskStatus, pollyTaskId });
       return;
     }
+
+    // Update DynamoDB task status to polly-completed
+    await dynamoDBService.updateTaskPollyCompleted(pollyTaskId, message.outputUri);
 
     // Check if outputUri is present
     if (!message.outputUri) {
@@ -351,6 +366,9 @@ async function processSNSEvent(
         s3Service.renameFile(s3Bucket, audioKey, audioKey.replace(`.${pollyTaskId}`, '')),
         s3Service.renameFile(s3Bucket, jsonKey, jsonKey.replace(`.${pollyTaskId}`, ''))
       ]);
+
+      // Update DynamoDB task status to completed
+      await dynamoDBService.updateTaskCompleted(pollyTaskId);
     }
 
     if (!audioMimeType) {
@@ -404,12 +422,17 @@ async function processSNSEvent(
 
     // Rename the audio and JSON files to remove the .<taskId> from the filename
     await beforeReturn();
-
   } catch (error) {
     logger.error('Error processing SNS event record', { 
       recordId: record.Sns.MessageId, 
       error 
     });
+    
+    // Update DynamoDB task status to failed if we have a taskId
+    if (pollyTaskId) {
+      await dynamoDBService.updateTaskFailed(pollyTaskId, error instanceof Error ? error.message : 'Unknown error');
+    }
+    
     throw error;
   }
 }
