@@ -140,7 +140,7 @@ describe('pollyTaskCompletedHandler', () => {
         taskId: 'test-task-id',
         taskStatus: 'COMPLETED',
         outputFormat: 'mp3',
-        outputUri: 'https://s3.amazonaws.com/test-bucket/test-folder/song.mp3.test-task-id',
+        outputUri: 'https://s3.amazonaws.com/test-bucket/test-folder/audio.mp3.test-task-id',
       };
 
       const mockEvent = createMockSNSEvent(mockMessage);
@@ -148,7 +148,7 @@ describe('pollyTaskCompletedHandler', () => {
       mockS3Service.fileExists.mockResolvedValue(true);
       mockS3Service.downloadFile
         .mockResolvedValueOnce(Buffer.from('audio-data'))
-        .mockResolvedValueOnce(Buffer.from(JSON.stringify({ title: 'Test Song' })));
+        .mockResolvedValueOnce(Buffer.from(JSON.stringify({ title: 'Test Audio' })));
       mockId3Processor.applyTags.mockResolvedValue(Buffer.from('tagged-audio-data'));
 
       await pollyTaskCompleted(mockEvent, mockContext, mockCallback);
@@ -168,7 +168,7 @@ describe('pollyTaskCompletedHandler', () => {
         taskId: 'test-task-id',
         taskStatus: 'FAILED',
         outputFormat: 'mp3',
-        outputUri: 'https://s3.amazonaws.com/test-bucket/test-folder/song.mp3.test-task-id',
+        outputUri: 'https://s3.amazonaws.com/test-bucket/test-folder/audio.mp3.test-task-id',
       };
 
       const mockEvent = createMockSNSEvent(mockMessage);
@@ -190,7 +190,7 @@ describe('pollyTaskCompletedHandler', () => {
           taskId: 'test-task-id',
           taskStatus: status,
           outputFormat: 'mp3',
-          outputUri: 'https://s3.amazonaws.com/test-bucket/test-folder/song.mp3.test-task-id',
+          outputUri: 'https://s3.amazonaws.com/test-bucket/test-folder/audio.mp3.test-task-id',
         };
 
         const mockEvent = createMockSNSEvent(mockMessage);
@@ -228,7 +228,7 @@ describe('pollyTaskCompletedHandler', () => {
         taskId: 'test-task-id',
         taskStatus: 'COMPLETED',
         outputFormat: 'ogg',
-        outputUri: 'https://s3.amazonaws.com/test-bucket/test-folder/song.ogg.test-task-id',
+        outputUri: 'https://s3.amazonaws.com/test-bucket/test-folder/audio.ogg.test-task-id',
       };
 
       const mockEvent = createMockSNSEvent(mockMessage);
@@ -238,7 +238,7 @@ describe('pollyTaskCompletedHandler', () => {
 
       expect(mockLogger.warn).toHaveBeenCalledWith('Skipping non-MP3 output format for ID3 metadata', {
         audioMimeType: 'audio/ogg',
-        audioKey: 'test-bucket/test-folder/song.ogg.test-task-id',
+        audioKey: 'test-bucket/test-folder/audio.ogg.test-task-id',
         pollyTaskId: 'test-task-id',
       });
       expect(mockS3Service.renameFile).toHaveBeenCalledTimes(2);
@@ -250,7 +250,7 @@ describe('pollyTaskCompletedHandler', () => {
         taskId: 'test-task-id',
         taskStatus: 'COMPLETED',
         outputFormat: 'unknown',
-        outputUri: 'https://s3.amazonaws.com/test-bucket/test-folder/song.unknown.test-task-id',
+        outputUri: 'https://s3.amazonaws.com/test-bucket/test-folder/audio.unknown.test-task-id',
       };
 
       const mockEvent = createMockSNSEvent(mockMessage);
@@ -259,7 +259,7 @@ describe('pollyTaskCompletedHandler', () => {
       await pollyTaskCompleted(mockEvent, mockContext, mockCallback);
 
       expect(mockLogger.warn).toHaveBeenCalledWith('Invalid audio file extension for ID3 metadata', {
-        audioKey: 'test-bucket/test-folder/song.unknown.test-task-id',
+        audioKey: 'test-bucket/test-folder/audio.unknown.test-task-id',
         audioMimeType: null,
       });
       expect(mockS3Service.renameFile).toHaveBeenCalledTimes(2);
@@ -273,7 +273,7 @@ describe('pollyTaskCompletedHandler', () => {
         taskId: 'test-task-id',
         taskStatus: 'COMPLETED',
         outputFormat: 'mp3',
-        outputUri: 'https://s3.amazonaws.com/test-bucket/test-folder/song.mp3.test-task-id',
+        outputUri: 'https://s3.amazonaws.com/test-bucket/test-folder/audio.mp3.test-task-id',
       };
 
       const mockEvent = createMockSNSEvent(mockMessage);
@@ -293,7 +293,7 @@ describe('pollyTaskCompletedHandler', () => {
         taskId: 'test-task-id',
         taskStatus: 'COMPLETED',
         outputFormat: 'mp3',
-        outputUri: 'https://s3.amazonaws.com/test-bucket/test-folder/song.mp3.test-task-id',
+        outputUri: 'https://s3.amazonaws.com/test-bucket/test-folder/audio.mp3.test-task-id',
       };
 
       const mockEvent = createMockSNSEvent(mockMessage);
@@ -319,7 +319,7 @@ describe('pollyTaskCompletedHandler', () => {
         taskId: 'test-task-id',
         taskStatus: 'COMPLETED',
         outputFormat: 'mp3',
-        outputUri: 'https://s3.amazonaws.com/test-bucket/test-folder/song.mp3.test-task-id',
+        outputUri: 'https://s3.amazonaws.com/test-bucket/test-folder/audio.mp3.test-task-id',
       };
 
       const mockEvent = createMockSNSEvent(mockMessage);
