@@ -14,15 +14,7 @@ export interface TaskRecord {
 }
 
 export class DynamoDBService {
-  private client: DynamoDBClient;
-  private tableName: string;
-  private logger: Logger;
-
-  constructor() {
-    this.client = new DynamoDBClient({ region: process.env.AWS_REGION });
-    this.tableName = process.env.DYNAMODB_TABLE_NAME || 'polly-id3-tasks';
-    this.logger = new Logger();
-  }
+  constructor(private readonly logger: Logger, private readonly tableName: string, private readonly client: DynamoDBClient) {}
 
   /**
    * Create a new task record when the synthesis is initiated
