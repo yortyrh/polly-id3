@@ -95,8 +95,8 @@ describe('id3MetadataHandler', () => {
         folderKey: 'test-folder/',
       };
 
-      const mockFiles = ['test-folder/song1.mp3', 'test-folder/song2.mp3'];
-      const mockMetadata = { title: 'Test Song', artist: 'Test Artist' };
+      const mockFiles = ['test-folder/audio1.mp3', 'test-folder/audio2.mp3'];
+      const mockMetadata = { title: 'Test Audio', artist: 'Test Artist' };
       const mockMp3Buffer = Buffer.from('mp3-audio-data');
       const mockJsonBuffer = Buffer.from(JSON.stringify(mockMetadata));
       const mockTaggedBuffer = Buffer.from('tagged-mp3-data');
@@ -115,14 +115,14 @@ describe('id3MetadataHandler', () => {
       expect(mockS3Service.listMp3Files).toHaveBeenCalledWith('test-bucket', 'test-folder/');
       expect(mockLogger.info).toHaveBeenCalledWith('Found files', { files: mockFiles });
       expect(mockS3Service.fileExists).toHaveBeenCalledTimes(2);
-      expect(mockS3Service.fileExists).toHaveBeenCalledWith('test-bucket', 'test-folder/song1.json');
-      expect(mockS3Service.fileExists).toHaveBeenCalledWith('test-bucket', 'test-folder/song2.json');
+      expect(mockS3Service.fileExists).toHaveBeenCalledWith('test-bucket', 'test-folder/audio1.json');
+      expect(mockS3Service.fileExists).toHaveBeenCalledWith('test-bucket', 'test-folder/audio2.json');
       expect(mockS3Service.downloadFile).toHaveBeenCalledTimes(4);
       expect(mockId3Processor.applyTags).toHaveBeenCalledTimes(2);
       expect(mockS3Service.uploadFile).toHaveBeenCalledTimes(2);
       expect(mockS3Service.uploadFile).toHaveBeenCalledWith(
         'test-bucket',
-        'test-folder/song1.mp3',
+        'test-folder/audio1.mp3',
         mockTaggedBuffer,
         'audio/mpeg'
       );
@@ -134,15 +134,15 @@ describe('id3MetadataHandler', () => {
         folderKey: 'test-folder/',
       };
 
-      const mockFiles = ['test-folder/song1.mp3', 'test-folder/song2.mp3'];
+      const mockFiles = ['test-folder/audio1.mp3', 'test-folder/audio2.mp3'];
 
       mockS3Service.listMp3Files.mockResolvedValue(mockFiles);
       mockS3Service.fileExists
-        .mockResolvedValueOnce(true)  // song1.json exists
-        .mockResolvedValueOnce(false); // song2.json doesn't exist
+        .mockResolvedValueOnce(true)  // audio1.json exists
+        .mockResolvedValueOnce(false); // audio2.json doesn't exist
 
       const mockMp3Buffer = Buffer.from('mp3-audio-data');
-      const mockJsonBuffer = Buffer.from('{"title": "Test Song"}');
+      const mockJsonBuffer = Buffer.from('{"title": "Test Audio"}');
       const mockTaggedBuffer = Buffer.from('tagged-mp3-data');
 
       mockS3Service.downloadFile
@@ -153,11 +153,11 @@ describe('id3MetadataHandler', () => {
       await updateId3Metadata(event);
 
       expect(mockLogger.warn).toHaveBeenCalledWith('JSON file does not exist', { 
-        file: 'test-folder/song2.mp3' 
+        file: 'test-folder/audio2.mp3' 
       });
-      expect(mockS3Service.downloadFile).toHaveBeenCalledTimes(2); // Only for song1
-      expect(mockId3Processor.applyTags).toHaveBeenCalledTimes(1); // Only for song1
-      expect(mockS3Service.uploadFile).toHaveBeenCalledTimes(1); // Only for song1
+      expect(mockS3Service.downloadFile).toHaveBeenCalledTimes(2); // Only for audio1
+      expect(mockId3Processor.applyTags).toHaveBeenCalledTimes(1); // Only for audio1
+      expect(mockS3Service.uploadFile).toHaveBeenCalledTimes(1); // Only for audio1
     });
 
     it('should process empty folder without errors', async () => {
@@ -184,7 +184,7 @@ describe('id3MetadataHandler', () => {
       };
 
       const mockFiles = ['music/albums/rock/track01.mp3'];
-      const mockMetadata = { title: 'Rock Song', artist: 'Rock Band', album: 'Rock Album' };
+      const mockMetadata = { title: 'Rock Audio', artist: 'Rock Band', album: 'Rock Album' };
       const mockMp3Buffer = Buffer.from('mp3-audio-data');
       const mockJsonBuffer = Buffer.from(JSON.stringify(mockMetadata));
       const mockTaggedBuffer = Buffer.from('tagged-mp3-data');
@@ -210,9 +210,9 @@ describe('id3MetadataHandler', () => {
         folderKey: 'test-folder/',
       };
 
-      const mockFiles = ['test-folder/song.mp3'];
+      const mockFiles = ['test-folder/audio.mp3'];
       const mockMetadata = {
-        title: 'Test Song',
+        title: 'Test Audio',
         artist: 'Test Artist',
         album: 'Test Album',
         genre: 'Test Genre',
@@ -241,7 +241,7 @@ describe('id3MetadataHandler', () => {
         folderKey: 'test-folder/',
       };
 
-      const mockFiles = ['test-folder/song.mp3'];
+      const mockFiles = ['test-folder/audio.mp3'];
       const mockMp3Buffer = Buffer.from('mp3-audio-data');
       const invalidJsonBuffer = Buffer.from('invalid-json-content');
 
@@ -260,7 +260,7 @@ describe('id3MetadataHandler', () => {
         folderKey: 'test-folder/',
       };
 
-      const mockFiles = ['test-folder/song.mp3'];
+      const mockFiles = ['test-folder/audio.mp3'];
       const emptyMetadata = {};
       const mockMp3Buffer = Buffer.from('mp3-audio-data');
       const mockJsonBuffer = Buffer.from(JSON.stringify(emptyMetadata));
@@ -297,7 +297,7 @@ describe('id3MetadataHandler', () => {
         folderKey: 'test-folder/',
       };
 
-      const mockFiles = ['test-folder/song.mp3'];
+      const mockFiles = ['test-folder/audio.mp3'];
 
       mockS3Service.listMp3Files.mockResolvedValue(mockFiles);
       mockS3Service.fileExists.mockRejectedValue(new Error('S3 fileExists error'));
@@ -311,7 +311,7 @@ describe('id3MetadataHandler', () => {
         folderKey: 'test-folder/',
       };
 
-      const mockFiles = ['test-folder/song.mp3'];
+      const mockFiles = ['test-folder/audio.mp3'];
 
       mockS3Service.listMp3Files.mockResolvedValue(mockFiles);
       mockS3Service.fileExists.mockResolvedValue(true);
@@ -326,7 +326,7 @@ describe('id3MetadataHandler', () => {
         folderKey: 'test-folder/',
       };
 
-      const mockFiles = ['test-folder/song.mp3'];
+      const mockFiles = ['test-folder/audio.mp3'];
       const mockMp3Buffer = Buffer.from('mp3-audio-data');
       const mockJsonBuffer = Buffer.from('{"title": "Test"}');
 
@@ -346,7 +346,7 @@ describe('id3MetadataHandler', () => {
         folderKey: 'test-folder/',
       };
 
-      const mockFiles = ['test-folder/song.mp3'];
+      const mockFiles = ['test-folder/audio.mp3'];
       const mockMp3Buffer = Buffer.from('mp3-audio-data');
       const mockJsonBuffer = Buffer.from('{"title": "Test"}');
       const mockTaggedBuffer = Buffer.from('tagged-mp3-data');
@@ -370,7 +370,7 @@ describe('id3MetadataHandler', () => {
         folderKey: 'test-folder/',
       };
 
-      const mockFiles = ['test-folder/song.mp3'];
+      const mockFiles = ['test-folder/audio.mp3'];
       const mockMp3Buffer = Buffer.from('mp3-audio-data');
       const mockJsonBuffer = Buffer.from('{"title": "Test"}');
       const mockTaggedBuffer = Buffer.from('tagged-mp3-data');
@@ -395,7 +395,7 @@ describe('id3MetadataHandler', () => {
         folderKey: 'test-folder/',
       };
 
-      const mockFiles = ['test-folder/song1.mp3', 'test-folder/song2.mp3'];
+      const mockFiles = ['test-folder/audio1.mp3', 'test-folder/audio2.mp3'];
       const mockMp3Buffer = Buffer.from('mp3-audio-data');
       const mockJsonBuffer = Buffer.from('{"title": "Test"}');
       const mockTaggedBuffer = Buffer.from('tagged-mp3-data');
