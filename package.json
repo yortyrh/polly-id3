@@ -1,5 +1,8 @@
 {
   "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "deploy:local": "node --env-file=.env.local scripts/deploy.js",
     "invoke": "env-cmd -f .env.local npx serverless invoke -f id3",
     "check-task": "env-cmd -f .env.local npx serverless invoke -f checkTaskStatus",
@@ -9,8 +12,11 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.152",
+    "@types/jest": "^30.0.0",
     "env-cmd": "^10.1.0",
+    "jest": "^30.0.5",
     "serverless-plugin-typescript": "^2.1.5",
+    "ts-jest": "^29.4.1",
     "typescript": "^5.9.2"
   },
   "dependencies": {

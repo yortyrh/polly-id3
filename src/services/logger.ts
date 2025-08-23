@@ -3,6 +3,9 @@
  * @description Logs messages to the console
  */
 export class Logger {
+
+  constructor(private readonly name: string) {}
+
   /**
    * Gets the current timestamp
    * @returns The current timestamp
@@ -21,7 +24,7 @@ export class Logger {
   private formatMessage(level: string, message: string, data?: any): string {
     const timestamp = this.getTimestamp();
     const dataStr = data ? ` ${JSON.stringify(data)}` : '';
-    return `[${timestamp}] [${level}] ${message}${dataStr}`;
+    return `[${timestamp}] [${level}] [${this.name}] ${message}${dataStr}`;
   }
 
   /**

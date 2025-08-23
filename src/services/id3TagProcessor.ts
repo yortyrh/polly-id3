@@ -99,7 +99,7 @@ export interface ID3Metadata {
  * });
  */
 export class ID3TagProcessor {
-  private logger = new Logger();
+  constructor(private readonly logger: Logger) {}
 
   /**
    * Applies ID3 tags to an MP3 buffer

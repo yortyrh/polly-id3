@@ -6,6 +6,7 @@ import { Logger } from "./logger";
 import { ID3TagProcessor } from "./id3TagProcessor";
 import { DynamoDBService } from "./DynamoDBService";
 import { ConfiguredRetryStrategy } from "@smithy/util-retry";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 
 /**
  * Creates an exponential backoff retry strategy for the Polly client.
@@ -23,7 +24,7 @@ const createExponentialBackoff = (maxRetryAttempts: number) => {
  * @class Factory
  * @description Creates and manages instances of services
  */
-export class Factory {
+class Factory {
   private services: Record<string, any> = {};
 
   /**
@@ -48,6 +49,14 @@ export class Factory {
   }
 
   /**
+   * Gets the table name
+   * @returns The table name
+   */
+  getTasksTableName(): string {
+    return process.env.DYNAMODB_TABLE_NAME || 'polly-id3-tasks';
+  }
+
+  /**
    * Gets an instance of an S3 client
    * @returns The instance of the S3 client
    */
@@ -65,7 +74,7 @@ export class Factory {
    * @returns The instance of the S3 service
    */
   getOrCreateS3Service(): S3Service {
-    return this.get("s3Service", () => new S3Service(this.getOrCreateS3()));
+    return this.get("s3Service", () => new S3Service(this.createLogger('S3Service'), this.getOrCreateS3()));
   }
 
   /**
@@ -92,8 +101,8 @@ export class Factory {
    * Gets an instance of a logger
    * @returns The instance of the logger
    */
-  createLogger(): Logger {
-    return new Logger();
+  createLogger(name: string): Logger {
+    return new Logger(name);
   }
 
   /**
@@ -101,7 +110,18 @@ export class Factory {
    * @returns The instance of the ID3 tag processor
    */
   getOrCreateId3TagProcessor(): ID3TagProcessor {
-    return this.get("id3TagProcessor", () => new ID3TagProcessor());
+    return this.get("id3TagProcessor", () => new ID3TagProcessor(this.createLogger('ID3TagProcessor')));
+  }
+
+  /**
+   * Gets an instance of a DynamoDB client
+   * @returns The instance of the DynamoDB client
+   */
+  getOrCreateDynamoDBClient(): DynamoDBClient {
+    return this.get("dynamoDBClient", () => new DynamoDBClient({
+      region: process.env.AWS_REGION,
+      retryStrategy: createExponentialBackoff(this.getOrCreateMaxRetryAttempts()),
+    }));
   }
 
   /**
@@ -109,6 +129,14 @@ export class Factory {
    * @returns The instance of the DynamoDB service
    */
   getOrCreateDynamoDBService(): DynamoDBService {
-    return this.get("dynamoDBService", () => new DynamoDBService());
+    return this.get("dynamoDBService", () => new DynamoDBService(
+      this.createLogger('DynamoDBService'),
+      this.getTasksTableName(),
+      this.getOrCreateDynamoDBClient()
+    ));
   }
 }
+
+const instance = new Factory();
+
+export const getFactory = () => instance;

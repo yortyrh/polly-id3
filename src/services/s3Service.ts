@@ -6,13 +6,11 @@ import { Logger } from './logger';
  * @description Handles S3 operations
  */
 export class S3Service {
-  private logger = new Logger();
-
   /**
    * @constructor
    * @param s3 - The S3 client
    */
-  constructor(private s3: S3) {}
+  constructor(private readonly logger: Logger, private readonly s3: S3) {}
 
   /**
    * Downloads a file from S3
