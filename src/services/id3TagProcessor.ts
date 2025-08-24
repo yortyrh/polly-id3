@@ -195,7 +195,7 @@ export class ID3TagProcessor {
       'comment',
       'lyrics',
       'composer',
-      'albumArtist',
+      'albumartist',
       'bpm',
       'artwork',
     ];
