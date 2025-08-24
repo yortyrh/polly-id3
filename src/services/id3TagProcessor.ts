@@ -4,7 +4,7 @@ import { imageUrlToBuffer } from '../utils';
 
 /**
  * @interface ID3Metadata
- * @description The metadata for an MP3 file
+ * @description The metadata for an audio file
  * @example
  * const metadata: ID3Metadata = {
  *   title: 'Test Title',
@@ -22,52 +22,52 @@ import { imageUrlToBuffer } from '../utils';
  */
 export interface ID3Metadata {
   /**
-   * @title - The title of the song
+   * @title - The title of the audio
    */
   title?: string;
 
   /**
-   * @artist - The artist of the song
+   * @artist - The artist of the audio
    */
   artist?: string;
 
   /**
-   * @album - The album of the song
+   * @album - The album of the audio
    */
   album?: string;
 
   /**
-   * @year - The year of the song
+   * @year - The year of the audio
    */
   genre?: string;
 
   /**
-   * @comment - The comment of the song
+   * @comment - The comment of the audio
    */
   comment?: string;
 
   /**
-   * @lyrics - The lyrics of the song
+   * @lyrics - The lyrics of the audio
    */
   lyrics?: string;
 
   /**
-   * @composer - The composer of the song
+   * @composer - The composer of the audio
    */
   composer?: string;
 
   /**
-   * @albumArtist - The album artist of the song
+   * @albumArtist - The album artist of the audio
    */
   albumArtist?: string;
 
   /**
-   * @bpm - The BPM of the song
+   * @bpm - The BPM of the audio
    */
   bpm?: string | number;
 
   /**
-   * @artwork - The artwork of the song
+   * @artwork - The artwork of the audio
    */
   artwork?: string;
 
@@ -79,10 +79,10 @@ export interface ID3Metadata {
 
 /**
  * @class ID3TagProcessor
- * @description Processes ID3 tags for an MP3 file
+ * @description Processes ID3 tags for an audio file
  * @example
  * const id3TagProcessor = new ID3TagProcessor();
- * const mp3Buffer = await id3TagProcessor.applyTags(mp3Buffer, {
+ * const audioBuffer = await id3TagProcessor.applyTags(audioBuffer, {
  *   title: 'Test Title',
  *   artist: 'Test Artist',
  *   album: 'Test Album',
@@ -102,8 +102,8 @@ export class ID3TagProcessor {
   constructor(private readonly logger: Logger) {}
 
   /**
-   * Applies ID3 tags to an MP3 buffer
-   * @param mp3Buffer - The MP3 file as a Buffer
+   * Applies ID3 tags to an audio buffer
+   * @param audioBuffer - The audio file as a Buffer
    * @param metadata - The metadata to apply as ID3 tags
    * @returns Buffer with ID3 tags applied
    */
@@ -114,11 +114,11 @@ export class ID3TagProcessor {
       // Convert metadata to NodeID3 format
       const id3Tags = await this.convertToID3Format(metadata);
 
-      // Apply tags to the MP3 buffer
+      // Apply tags to the audio buffer
       const taggedBuffer = NodeID3.write(id3Tags, audioBuffer);
 
       if (!taggedBuffer) {
-        throw new Error('Failed to write ID3 tags to Audio');
+        throw new Error('Failed to write ID3 tags to audio');
       }
 
       this.logger.info('Successfully applied ID3 tags');
@@ -195,13 +195,13 @@ export class ID3TagProcessor {
   }
 
   /**
-   * Reads existing ID3 tags from an MP3 buffer
-   * @param mp3Buffer - The MP3 file as a Buffer
+   * Reads existing ID3 tags from an audio buffer
+   * @param audioBuffer - The audio file as a Buffer
    * @returns The existing ID3 tags or null if none found
    */
-  readTags(mp3Buffer: Buffer): NodeID3.Tags | null {
+  readTags(audioBuffer: Buffer): NodeID3.Tags | null {
     try {
-      return NodeID3.read(mp3Buffer);
+      return NodeID3.read(audioBuffer);
     } catch (error) {
       this.logger.warn('Could not read existing ID3 tags', { error });
       return null;
