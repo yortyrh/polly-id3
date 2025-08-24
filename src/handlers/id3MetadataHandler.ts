@@ -4,7 +4,7 @@ import { getFactory } from '../services/factory';
 /**
  * This function is used to update the ID3 metadata in the S3 bucket folder.
  * It iterates over the files in the folder and updates the ID3 metadata.
- * Found files should be MP3 and JSON.
+ * Found files should be audio (MP3) and JSON.
  * @param event - The event object containing the S3 bucket name and folder key.
  * @returns The response object containing the status code, body, and the task ID.
  */
@@ -25,12 +25,12 @@ export const updateId3Metadata = async (event: { s3Bucket: string, folderKey: st
       logger.warn('JSON file does not exist', { file });
       continue;
     }
-    const [mp3Buffer, jsonData] = await Promise.all([
+    const [audioBuffer, jsonData] = await Promise.all([
       s3Service.downloadFile(s3Bucket, file),
       s3Service.downloadFile(s3Bucket, jsonFile)
     ]);
     const metadata = JSON.parse(jsonData.toString());
-    const taggedMp3Buffer = await id3Processor.applyTags(mp3Buffer, metadata);
-    await s3Service.uploadFile(s3Bucket, file, taggedMp3Buffer, 'audio/mpeg');
+    const taggedAudioBuffer = await id3Processor.applyTags(audioBuffer, metadata);
+    await s3Service.uploadFile(s3Bucket, file, taggedAudioBuffer, 'audio/mpeg');
   }
 };

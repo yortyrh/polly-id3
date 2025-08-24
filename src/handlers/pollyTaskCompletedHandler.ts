@@ -15,7 +15,7 @@ interface PollyTaskCompletedMessage {
 
 /**
  * This function is used to process the SNS event when the Polly task is completed.
- * It downloads the MP3 and JSON files, applies the ID3 metadata, and uploads the result back to S3.
+ * It downloads the audio and JSON files, applies the ID3 metadata, and uploads the result back to S3.
  * It renames the two files to remove the taskId from the filename.
  * @param event - The event object containing the SNS event.
  * @returns The response object containing the status code, body, and the task ID.
@@ -43,7 +43,7 @@ export const pollyTaskCompleted: SNSHandler = async (event: SNSEvent): Promise<v
 
 /**
  * This function is used to process the SNS event when the Polly task is completed.
- * It downloads the MP3 and JSON files, applies the ID3 metadata, and uploads the result back to S3.
+ * It downloads the audio and JSON files, applies the ID3 metadata, and uploads the result back to S3.
  * It renames the two files to remove the taskId from the filename.
  * @param record - The SNS event record.
  * @param s3Service - The S3 service.
@@ -124,7 +124,7 @@ async function processSNSEvent(
       return;
     }
 
-    // Download Audio file and JSON metadata
+    // Download audio file and JSON metadata
     const [audioBuffer, jsonData] = await Promise.all([
       s3Service.downloadFile(s3Bucket, audioKey),
       s3Service.downloadFile(s3Bucket, jsonKey)

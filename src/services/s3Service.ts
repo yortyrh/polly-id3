@@ -61,10 +61,10 @@ export class S3Service {
   }
 
   /**
-   * Lists all MP3 files in a given S3 bucket and key
+   * Lists all audio files (MP3) in a given S3 bucket and key
    * @param bucketName - The S3 bucket name
    * @param key - The S3 object key
-   * @returns Promise<string[]> - Array of MP3 file keys
+   * @returns Promise<string[]> - Array of audio file keys
    */
   async listMp3Files(bucketName: string, key: string): Promise<string[]> {
     const files = await this.listObjects(bucketName, key);
