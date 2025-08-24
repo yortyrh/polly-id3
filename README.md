@@ -1,4 +1,7 @@
 # Polly ID3 Tag Manager
+[![CI](https://github.com/{owner}/{repo}/workflows/CI/badge.svg)](https://github.com/{owner}/{repo}/actions?query=workflow%3ACI)
+[![Test Coverage](https://codecov.io/gh/{owner}/{repo}/branch/main/graph/badge.svg)](https://codecov.io/gh/{owner}/{repo})
+[![Security Scan](https://github.com/{owner}/{repo}/workflows/Security%20Audit/badge.svg)](https://github.com/{owner}/{repo}/actions?query=workflow%3A%22Security+Audit%22)
 
 A serverless AWS application that automatically generates speech audio using Amazon Polly and applies ID3 metadata tags to the resulting MP3 files. Perfect for n8n workflow automation and text-to-speech integration.
 
