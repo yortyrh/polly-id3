@@ -46,7 +46,7 @@ jobs:
       run: npm run test:coverage
       
     - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage/lcov.info
         flags: unittests
@@ -54,7 +54,7 @@ jobs:
         fail_ci_if_error: false
         
     - name: Upload coverage to GitHub
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: coverage-report-${{ matrix.node-version }}
         path: coverage/
@@ -156,7 +156,7 @@ jobs:
         run: npm run package
         
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: |
@@ -267,7 +267,7 @@ jobs:
       run: npm run quality:report
       
     - name: Upload quality report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: quality-report
         path: quality-report.json
