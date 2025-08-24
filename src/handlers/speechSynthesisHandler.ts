@@ -60,6 +60,7 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
   const factory = getFactory();
   const s3Service = factory.getOrCreateS3Service();
   const dynamoDBService = factory.getOrCreateDynamoDBService();
+  const logger = factory.createLogger('speechSynthesisHandler');
   const {
     text,
     key,
@@ -131,7 +132,10 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
     // Create task record in DynamoDB
     await dynamoDBService.createTask(taskId!, event);
 
-    console.log('Error synthesizing speech or uploading to S3:', taskId3Key, taskKeyPrefix);
+    logger.info('Error synthesizing speech or uploading to S3:', {
+      taskId3Key,
+      taskKeyPrefix,
+    });
     // upload JSON file to S3 with the object inside id3 if it exists
     if (id3) {
       await s3Service.uploadFile(
@@ -149,7 +153,7 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
       taskStatus: response.SynthesisTask?.TaskStatus,
     };
   } catch (error) {
-    console.error('Error synthesizing speech or uploading to S3:', error);
+    logger.error('Error synthesizing speech or uploading to S3:', { error });
     throw error;
   }
 };

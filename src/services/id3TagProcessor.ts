@@ -99,7 +99,7 @@ export interface ID3Metadata {
  * });
  */
 export class ID3TagProcessor {
-  constructor(private readonly logger: Logger) {}
+  constructor(private readonly logger: Logger) {} // eslint-disable-line no-unused-vars
 
   /**
    * Applies ID3 tags to an audio buffer

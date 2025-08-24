@@ -3,7 +3,7 @@
  * @description Logs messages to the console
  */
 export class Logger {
-  constructor(private readonly name: string) {}
+  constructor(private readonly name: string) {} // eslint-disable-line no-unused-vars
 
   /**
    * Gets the current timestamp
@@ -32,6 +32,7 @@ export class Logger {
    * @param data - The data to log
    */
   info(message: string, data?: any): void {
+    // eslint-disable-next-line no-console
     console.log(this.formatMessage('INFO', message, data));
   }
 
@@ -41,6 +42,7 @@ export class Logger {
    * @param data - The data to log
    */
   warn(message: string, data?: any): void {
+    // eslint-disable-next-line no-console
     console.warn(this.formatMessage('WARN', message, data));
   }
 
@@ -50,6 +52,7 @@ export class Logger {
    * @param data - The data to log
    */
   error(message: string, data?: any): void {
+    // eslint-disable-next-line no-console
     console.error(this.formatMessage('ERROR', message, data));
   }
 
@@ -60,6 +63,7 @@ export class Logger {
    */
   debug(message: string, data?: any): void {
     if (process.env.LOG_LEVEL === 'DEBUG') {
+      // eslint-disable-next-line no-console
       console.log(this.formatMessage('DEBUG', message, data));
     }
   }

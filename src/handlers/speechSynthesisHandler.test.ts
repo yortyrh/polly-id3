@@ -41,7 +41,7 @@ describe('speechSynthesisHandler', () => {
   let mockS3Service: any;
   let mockDynamoDBService: any;
   let mockPollyClient: any;
-  let mockStartSpeechSynthesisTaskCommand: any;
+  let mockLogger: any;
 
   beforeEach(() => {
     // Reset all mocks
@@ -71,11 +71,19 @@ describe('speechSynthesisHandler', () => {
       send: jest.fn(),
     };
 
+    mockLogger = {
+      info: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+      debug: jest.fn(),
+    };
+
     // Mock the Factory
     mockFactory = {
       getOrCreateS3Service: jest.fn().mockReturnValue(mockS3Service),
       getOrCreateDynamoDBService: jest.fn().mockReturnValue(mockDynamoDBService),
       getOrCreatePollyClient: jest.fn().mockReturnValue(mockPollyClient),
+      createLogger: jest.fn().mockReturnValue(mockLogger),
     };
 
     // Mock the getFactory function

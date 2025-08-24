@@ -11,8 +11,8 @@ export class S3Service {
    * @param s3 - The S3 client
    */
   constructor(
-    private readonly logger: Logger,
-    private readonly s3: S3
+    private readonly logger: Logger, // eslint-disable-line no-unused-vars
+    private readonly s3: S3 // eslint-disable-line no-unused-vars
   ) {}
 
   /**

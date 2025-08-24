@@ -20,9 +20,9 @@ export interface TaskRecord {
 
 export class DynamoDBService {
   constructor(
-    private readonly logger: Logger,
-    private readonly tableName: string,
-    private readonly client: DynamoDBClient
+    private readonly logger: Logger, // eslint-disable-line no-unused-vars
+    private readonly tableName: string, // eslint-disable-line no-unused-vars
+    private readonly client: DynamoDBClient // eslint-disable-line no-unused-vars
   ) {}
 
   /**
