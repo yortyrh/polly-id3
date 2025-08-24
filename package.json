@@ -10,8 +10,6 @@
     "format:fix": "prettier --write src/**/*.ts",
     "build": "tsc --noEmit",
     "package": "serverless package --stage $STAGE",
-    "bundle:analyze": "npm run build && npm run analyze-bundle",
-    "analyze-bundle": "npx webpack-bundle-analyzer dist/stats.json",
     "quality:report": "node scripts/generate-quality-report.js",
     "ci:summary": "node scripts/generate-ci-summary.js",
     "deploy:local": "node --env-file=.env.local scripts/deploy.js",

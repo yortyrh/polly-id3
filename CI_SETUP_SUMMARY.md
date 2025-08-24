@@ -68,7 +68,6 @@ npm run package           # Package for deployment
 # Quality Reports
 npm run quality:report    # Generate quality report
 npm run ci:summary        # Generate CI summary
-npm run bundle:analyze    # Analyze bundle size
 ```
 
 ### 4. **Coverage Requirements**
