@@ -3,7 +3,6 @@
  * @description Logs messages to the console
  */
 export class Logger {
-
   constructor(private readonly name: string) {}
 
   /**

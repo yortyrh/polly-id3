@@ -123,7 +123,6 @@ export class ID3TagProcessor {
 
       this.logger.info('Successfully applied ID3 tags');
       return taggedBuffer;
-
     } catch (error) {
       this.logger.error('Error applying ID3 tags', { error, metadata });
       throw error;
@@ -156,15 +155,15 @@ export class ID3TagProcessor {
         tags.image = {
           mime,
           type: {
-            id: NodeID3.TagConstants.AttachedPicture.PictureType.FRONT_COVER
+            id: NodeID3.TagConstants.AttachedPicture.PictureType.FRONT_COVER,
           }, // See https://en.wikipedia.org/wiki/ID3#ID3v2_embedded_image_extension
           description: 'Cover',
           imageBuffer,
         };
       } catch (error) {
-        this.logger.error("Error converting image URL to Buffer", error);
+        this.logger.error('Error converting image URL to Buffer', error);
       }
-    };
+    }
 
     // Handle custom fields
     Object.keys(metadata).forEach(key => {
@@ -172,7 +171,7 @@ export class ID3TagProcessor {
         tags.userDefinedText = tags.userDefinedText || [];
         tags.userDefinedText.push({
           description: key,
-          value: metadata[key].toString()
+          value: metadata[key].toString(),
         });
       }
     });
@@ -187,8 +186,17 @@ export class ID3TagProcessor {
    */
   private isStandardField(fieldName: string): boolean {
     const standardFields = [
-      'title', 'artist', 'album', 'year', 'track', 'genre',
-      'comment', 'lyrics', 'composer', 'albumArtist', 'bpm', 
+      'title',
+      'artist',
+      'album',
+      'year',
+      'track',
+      'genre',
+      'comment',
+      'lyrics',
+      'composer',
+      'albumArtist',
+      'bpm',
       'artwork',
     ];
     return standardFields.includes(fieldName.toLowerCase());

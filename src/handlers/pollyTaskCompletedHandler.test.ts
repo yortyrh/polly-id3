@@ -236,11 +236,14 @@ describe('pollyTaskCompletedHandler', () => {
 
       await pollyTaskCompleted(mockEvent, mockContext, mockCallback);
 
-      expect(mockLogger.warn).toHaveBeenCalledWith('Skipping non-MP3 output format for ID3 metadata', {
-        audioMimeType: 'audio/ogg',
-        audioKey: 'test-bucket/test-folder/audio.ogg.test-task-id',
-        pollyTaskId: 'test-task-id',
-      });
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        'Skipping non-MP3 output format for ID3 metadata',
+        {
+          audioMimeType: 'audio/ogg',
+          audioKey: 'test-bucket/test-folder/audio.ogg.test-task-id',
+          pollyTaskId: 'test-task-id',
+        }
+      );
       expect(mockS3Service.renameFile).toHaveBeenCalledTimes(2);
       expect(mockDynamoDBService.updateTaskCompleted).toHaveBeenCalledWith('test-task-id');
     });
@@ -258,10 +261,13 @@ describe('pollyTaskCompletedHandler', () => {
 
       await pollyTaskCompleted(mockEvent, mockContext, mockCallback);
 
-      expect(mockLogger.warn).toHaveBeenCalledWith('Invalid audio file extension for ID3 metadata', {
-        audioKey: 'test-bucket/test-folder/audio.unknown.test-task-id',
-        audioMimeType: null,
-      });
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        'Invalid audio file extension for ID3 metadata',
+        {
+          audioKey: 'test-bucket/test-folder/audio.unknown.test-task-id',
+          audioMimeType: null,
+        }
+      );
       expect(mockS3Service.renameFile).toHaveBeenCalledTimes(2);
       expect(mockDynamoDBService.updateTaskCompleted).toHaveBeenCalledWith('test-task-id');
     });
@@ -280,7 +286,9 @@ describe('pollyTaskCompletedHandler', () => {
 
       mockS3Service.fileExists.mockRejectedValue(new Error('S3 service error'));
 
-      await expect(pollyTaskCompleted(mockEvent, mockContext, mockCallback)).rejects.toThrow('S3 service error');
+      await expect(pollyTaskCompleted(mockEvent, mockContext, mockCallback)).rejects.toThrow(
+        'S3 service error'
+      );
 
       expect(mockDynamoDBService.updateTaskFailed).toHaveBeenCalledWith(
         'test-task-id',
@@ -304,7 +312,9 @@ describe('pollyTaskCompletedHandler', () => {
         .mockResolvedValueOnce(Buffer.from('{"title": "Test"}'));
       mockId3Processor.applyTags.mockRejectedValue(new Error('ID3 processing error'));
 
-      await expect(pollyTaskCompleted(mockEvent, mockContext, mockCallback)).rejects.toThrow('ID3 processing error');
+      await expect(pollyTaskCompleted(mockEvent, mockContext, mockCallback)).rejects.toThrow(
+        'ID3 processing error'
+      );
 
       expect(mockDynamoDBService.updateTaskFailed).toHaveBeenCalledWith(
         'test-task-id',

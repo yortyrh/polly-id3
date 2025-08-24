@@ -10,7 +10,10 @@ export class S3Service {
    * @constructor
    * @param s3 - The S3 client
    */
-  constructor(private readonly logger: Logger, private readonly s3: S3) {}
+  constructor(
+    private readonly logger: Logger,
+    private readonly s3: S3
+  ) {}
 
   /**
    * Downloads a file from S3
@@ -24,30 +27,29 @@ export class S3Service {
 
       const params: S3.GetObjectRequest = {
         Bucket: bucketName,
-        Key: key
+        Key: key,
       };
 
       const response = await this.s3.getObject(params).promise();
-      
+
       if (!response.Body) {
         throw new Error(`No body found in S3 response for key: ${key}`);
       }
 
       // Convert to Buffer
       const buffer = Buffer.from(response.Body as any);
-      
-      this.logger.info('Successfully downloaded file from S3', { 
-        bucketName, 
-        key, 
-        size: buffer.length 
+
+      this.logger.info('Successfully downloaded file from S3', {
+        bucketName,
+        key,
+        size: buffer.length,
       });
 
       return buffer;
-
     } catch (error) {
-      this.logger.error('Error downloading file from S3', { 
-        bucketName, 
-        key, 
+      this.logger.error('Error downloading file from S3', {
+        bucketName,
+        key,
         error,
         errorMessage: error.message,
         errorStack: error.stack,
@@ -80,17 +82,17 @@ export class S3Service {
    * @returns Promise<void>
    */
   async uploadFile(
-    bucketName: string, 
-    key: string, 
-    body: Buffer, 
+    bucketName: string,
+    key: string,
+    body: Buffer,
     contentType: string
   ): Promise<void> {
     try {
-      this.logger.info('Uploading file to S3', { 
-        bucketName, 
-        key, 
+      this.logger.info('Uploading file to S3', {
+        bucketName,
+        key,
         size: body.length,
-        contentType 
+        contentType,
       });
 
       const params: S3.PutObjectRequest = {
@@ -100,23 +102,22 @@ export class S3Service {
         ContentType: contentType,
         Metadata: {
           'processed-by': 'apply-id3-lambda',
-          'processed-at': new Date().toISOString()
-        }
+          'processed-at': new Date().toISOString(),
+        },
       };
 
       await this.s3.putObject(params).promise();
 
-      this.logger.info('Successfully uploaded file to S3', { 
-        bucketName, 
-        key, 
-        size: body.length 
+      this.logger.info('Successfully uploaded file to S3', {
+        bucketName,
+        key,
+        size: body.length,
       });
-
     } catch (error) {
-      this.logger.error('Error uploading file to S3', { 
-        bucketName, 
-        key, 
-        error 
+      this.logger.error('Error uploading file to S3', {
+        bucketName,
+        key,
+        error,
       });
       throw error;
     }
@@ -132,12 +133,11 @@ export class S3Service {
     try {
       const params: S3.HeadObjectRequest = {
         Bucket: bucketName,
-        Key: key
+        Key: key,
       };
 
       await this.s3.headObject(params).promise();
       return true;
-
     } catch (error) {
       if ((error as any).code === 'NotFound' || (error as any).statusCode === 404) {
         return false;
@@ -156,22 +156,21 @@ export class S3Service {
     try {
       const params: S3.ListObjectsV2Request = {
         Bucket: bucketName,
-        Prefix: prefix
+        Prefix: prefix,
       };
 
       const response = await this.s3.listObjectsV2(params).promise();
-      
+
       if (!response.Contents) {
         return [];
       }
 
       return response.Contents.map(obj => obj.Key!).filter(Boolean);
-
     } catch (error) {
-      this.logger.error('Error listing objects in S3', { 
-        bucketName, 
-        prefix, 
-        error 
+      this.logger.error('Error listing objects in S3', {
+        bucketName,
+        prefix,
+        error,
       });
       throw error;
     }
@@ -189,19 +188,18 @@ export class S3Service {
       const params: S3.CopyObjectRequest = {
         Bucket: bucketName,
         CopySource: `${bucketName}/${key}`,
-        Key: newKey
+        Key: newKey,
       };
 
       await this.s3.copyObject(params).promise();
 
       await this.s3.deleteObject({ Bucket: bucketName, Key: key }).promise();
-
     } catch (error) {
-      this.logger.error('Error renaming file in S3', { 
-        bucketName, 
-        key, 
-        newKey, 
-        error 
+      this.logger.error('Error renaming file in S3', {
+        bucketName,
+        key,
+        newKey,
+        error,
       });
       throw error;
     }

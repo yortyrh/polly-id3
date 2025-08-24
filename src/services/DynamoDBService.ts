@@ -1,4 +1,9 @@
-import { DynamoDBClient, PutItemCommand, GetItemCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import {
+  DynamoDBClient,
+  PutItemCommand,
+  GetItemCommand,
+  UpdateItemCommand,
+} from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { Logger } from './logger';
 
@@ -14,7 +19,11 @@ export interface TaskRecord {
 }
 
 export class DynamoDBService {
-  constructor(private readonly logger: Logger, private readonly tableName: string, private readonly client: DynamoDBClient) {}
+  constructor(
+    private readonly logger: Logger,
+    private readonly tableName: string,
+    private readonly client: DynamoDBClient
+  ) {}
 
   /**
    * Create a new task record when the synthesis is initiated
@@ -22,20 +31,20 @@ export class DynamoDBService {
   async createTask(taskId: string, eventData: any): Promise<void> {
     try {
       // Set TTL to 7 days from now
-      const ttl = Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60);
-      
+      const ttl = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
+
       const taskRecord: TaskRecord = {
         taskId,
         status: 'polly-scheduled',
         eventData,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        ttl
+        ttl,
       };
 
       const command = new PutItemCommand({
         TableName: this.tableName,
-        Item: marshall(taskRecord)
+        Item: marshall(taskRecord),
       });
 
       await this.client.send(command);
@@ -56,13 +65,13 @@ export class DynamoDBService {
         Key: marshall({ taskId }),
         UpdateExpression: 'SET #status = :status, s3Location = :s3Location, updatedAt = :updatedAt',
         ExpressionAttributeNames: {
-          '#status': 'status'
+          '#status': 'status',
         },
         ExpressionAttributeValues: marshall({
           ':status': 'polly-completed',
           ':s3Location': s3Location,
-          ':updatedAt': new Date().toISOString()
-        })
+          ':updatedAt': new Date().toISOString(),
+        }),
       });
 
       await this.client.send(command);
@@ -83,12 +92,12 @@ export class DynamoDBService {
         Key: marshall({ taskId }),
         UpdateExpression: 'SET #status = :status, updatedAt = :updatedAt',
         ExpressionAttributeNames: {
-          '#status': 'status'
+          '#status': 'status',
         },
         ExpressionAttributeValues: marshall({
           ':status': 'completed',
-          ':updatedAt': new Date().toISOString()
-        })
+          ':updatedAt': new Date().toISOString(),
+        }),
       });
 
       await this.client.send(command);
@@ -107,15 +116,16 @@ export class DynamoDBService {
       const command = new UpdateItemCommand({
         TableName: this.tableName,
         Key: marshall({ taskId }),
-        UpdateExpression: 'SET #status = :status, errorMessage = :errorMessage, updatedAt = :updatedAt',
+        UpdateExpression:
+          'SET #status = :status, errorMessage = :errorMessage, updatedAt = :updatedAt',
         ExpressionAttributeNames: {
-          '#status': 'status'
+          '#status': 'status',
         },
         ExpressionAttributeValues: marshall({
           ':status': 'failed',
           ':errorMessage': errorMessage,
-          ':updatedAt': new Date().toISOString()
-        })
+          ':updatedAt': new Date().toISOString(),
+        }),
       });
 
       await this.client.send(command);
@@ -133,11 +143,11 @@ export class DynamoDBService {
     try {
       const command = new GetItemCommand({
         TableName: this.tableName,
-        Key: marshall({ taskId })
+        Key: marshall({ taskId }),
       });
 
       const response = await this.client.send(command);
-      
+
       if (!response.Item) {
         this.logger.warn('Task not found', { taskId });
         return null;

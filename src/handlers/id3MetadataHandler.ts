@@ -1,6 +1,5 @@
 import { getFactory } from '../services/factory';
 
-
 /**
  * This function is used to update the ID3 metadata in the S3 bucket folder.
  * It iterates over the files in the folder and updates the ID3 metadata.
@@ -8,7 +7,7 @@ import { getFactory } from '../services/factory';
  * @param event - The event object containing the S3 bucket name and folder key.
  * @returns The response object containing the status code, body, and the task ID.
  */
-export const updateId3Metadata = async (event: { s3Bucket: string, folderKey: string }) => {
+export const updateId3Metadata = async (event: { s3Bucket: string; folderKey: string }) => {
   const factory = getFactory();
   const { s3Bucket, folderKey } = event;
 
@@ -27,7 +26,7 @@ export const updateId3Metadata = async (event: { s3Bucket: string, folderKey: st
     }
     const [audioBuffer, jsonData] = await Promise.all([
       s3Service.downloadFile(s3Bucket, file),
-      s3Service.downloadFile(s3Bucket, jsonFile)
+      s3Service.downloadFile(s3Bucket, jsonFile),
     ]);
     const metadata = JSON.parse(jsonData.toString());
     const taggedAudioBuffer = await id3Processor.applyTags(audioBuffer, metadata);
