@@ -298,6 +298,7 @@ jobs:
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v6
       with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const fs = require('fs');
           const summary = fs.readFileSync('ci-summary.md', 'utf8');
