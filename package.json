@@ -22,7 +22,6 @@
     "remove": "npx serverless remove --stage dev"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.8.0",
     "@types/aws-lambda": "^8.10.152",
     "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
