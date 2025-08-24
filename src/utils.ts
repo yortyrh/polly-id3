@@ -69,7 +69,10 @@ export const textToTextType = (text: string, forceTextType?: TextType): TextType
     return forceTextType;
   }
   // More strict SSML detection - must start with <speak> and have proper structure
-  const trimmedText = text.trim();
+  const trimmedText = text
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/<\?xml.*\?>/, '')
+    .trim();
   if (trimmedText.startsWith('<speak') && trimmedText.includes('</speak>')) {
     return 'ssml' as TextType;
   }

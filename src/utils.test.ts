@@ -16,6 +16,10 @@ describe('Utils', () => {
     delete process.env.DEFAULT_VOICE_ID;
     delete process.env.DEFAULT_LANGUAGE_CODE;
     delete process.env.DEFAULT_ENGINE;
+    delete process.env.TEXT_TYPE;
+    delete process.env.VOICE_ID;
+    delete process.env.LANGUAGE_CODE;
+    delete process.env.POLLY_ENGINE;
   });
 
   describe('fileNameToPollyFormat', () => {
