@@ -70,7 +70,6 @@ describe('S3Service', () => {
         Prefix: 'folder/',
       });
       expect(result).toEqual(['folder/audio1.mp3', 'folder/audio2.mp3', 'folder/audio3.mp3']);
-
     });
 
     it('should return empty array when no audio files found', async () => {
@@ -85,7 +84,6 @@ describe('S3Service', () => {
       const result = await s3Service.listMp3Files('test-bucket', 'folder/');
 
       expect(result).toEqual([]);
-
     });
 
     it('should handle S3 list errors gracefully', async () => {
@@ -498,10 +496,7 @@ describe('S3Service', () => {
 
       const result = await s3Service.listMp3Files('test-bucket', 'folder/');
 
-      expect(result).toEqual([
-        'folder/audio1.mp3',
-        'folder/audio5.mp3',
-      ]);
+      expect(result).toEqual(['folder/audio1.mp3', 'folder/audio5.mp3']);
     });
 
     it('should exclude non-MP3 files even if they contain mp3 in the name', async () => {

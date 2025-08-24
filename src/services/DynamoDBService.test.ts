@@ -1,5 +1,5 @@
 import { DynamoDBService } from './DynamoDBService';
-import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { Logger } from './logger';
 
 // Mock AWS SDK
