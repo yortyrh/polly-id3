@@ -115,8 +115,14 @@ describe('id3MetadataHandler', () => {
       expect(mockS3Service.listMp3Files).toHaveBeenCalledWith('test-bucket', 'test-folder/');
       expect(mockLogger.info).toHaveBeenCalledWith('Found files', { files: mockFiles });
       expect(mockS3Service.fileExists).toHaveBeenCalledTimes(2);
-      expect(mockS3Service.fileExists).toHaveBeenCalledWith('test-bucket', 'test-folder/audio1.json');
-      expect(mockS3Service.fileExists).toHaveBeenCalledWith('test-bucket', 'test-folder/audio2.json');
+      expect(mockS3Service.fileExists).toHaveBeenCalledWith(
+        'test-bucket',
+        'test-folder/audio1.json'
+      );
+      expect(mockS3Service.fileExists).toHaveBeenCalledWith(
+        'test-bucket',
+        'test-folder/audio2.json'
+      );
       expect(mockS3Service.downloadFile).toHaveBeenCalledTimes(4);
       expect(mockId3Processor.applyTags).toHaveBeenCalledTimes(2);
       expect(mockS3Service.uploadFile).toHaveBeenCalledTimes(2);
@@ -138,7 +144,7 @@ describe('id3MetadataHandler', () => {
 
       mockS3Service.listMp3Files.mockResolvedValue(mockFiles);
       mockS3Service.fileExists
-        .mockResolvedValueOnce(true)  // audio1.json exists
+        .mockResolvedValueOnce(true) // audio1.json exists
         .mockResolvedValueOnce(false); // audio2.json doesn't exist
 
       const mockAudioBuffer = Buffer.from('mp3-audio-data');
@@ -152,8 +158,8 @@ describe('id3MetadataHandler', () => {
 
       await updateId3Metadata(event);
 
-      expect(mockLogger.warn).toHaveBeenCalledWith('JSON file does not exist', { 
-        file: 'test-folder/audio2.mp3' 
+      expect(mockLogger.warn).toHaveBeenCalledWith('JSON file does not exist', {
+        file: 'test-folder/audio2.mp3',
       });
       expect(mockS3Service.downloadFile).toHaveBeenCalledTimes(2); // Only for audio1
       expect(mockId3Processor.applyTags).toHaveBeenCalledTimes(1); // Only for audio1
@@ -198,7 +204,10 @@ describe('id3MetadataHandler', () => {
 
       await updateId3Metadata(event);
 
-      expect(mockS3Service.fileExists).toHaveBeenCalledWith('test-bucket', 'music/albums/rock/track01.json');
+      expect(mockS3Service.fileExists).toHaveBeenCalledWith(
+        'test-bucket',
+        'music/albums/rock/track01.json'
+      );
       expect(mockId3Processor.applyTags).toHaveBeenCalledWith(mockAudioBuffer, mockMetadata);
     });
   });
@@ -217,7 +226,7 @@ describe('id3MetadataHandler', () => {
         album: 'Test Album',
         genre: 'Test Genre',
         year: '2023',
-        track: '1'
+        track: '1',
       };
       const mockAudioBuffer = Buffer.from('mp3-audio-data');
       const mockJsonBuffer = Buffer.from(JSON.stringify(mockMetadata));

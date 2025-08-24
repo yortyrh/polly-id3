@@ -52,14 +52,14 @@ export const pollyTaskCompleted: SNSHandler = async (event: SNSEvent): Promise<v
  * @returns The response object containing the status code, body, and the task ID.
  */
 async function processSNSEvent(
-  record: SNSEventRecord, 
-  s3Service: S3Service, 
+  record: SNSEventRecord,
+  s3Service: S3Service,
   dynamoDBService: DynamoDBService,
-  id3Processor: ID3TagProcessor, 
+  id3Processor: ID3TagProcessor,
   logger: Logger
 ): Promise<void> {
   let pollyTaskId: string = '';
-  
+
   try {
     const message = JSON.parse(record.Sns.Message) as PollyTaskCompletedMessage;
     logger.info('Processing SNS message', { messageId: record.Sns.MessageId });
@@ -71,7 +71,7 @@ async function processSNSEvent(
 
     logger.info('Polly task details', { pollyTaskId, pollyTaskStatus, outputFormat });
     logger.info('Message', JSON.stringify(message, null, 2));
-    
+
     if (pollyTaskStatus !== 'COMPLETED') {
       logger.warn('Skipping non-COMPLETED task status', { pollyTaskStatus, pollyTaskId });
       return;
@@ -95,12 +95,12 @@ async function processSNSEvent(
     const beforeReturn = async () => {
       await Promise.all([
         s3Service.renameFile(s3Bucket, audioKey, audioKey.replace(`.${pollyTaskId}`, '')),
-        s3Service.renameFile(s3Bucket, jsonKey, jsonKey.replace(`.${pollyTaskId}`, ''))
+        s3Service.renameFile(s3Bucket, jsonKey, jsonKey.replace(`.${pollyTaskId}`, '')),
       ]);
 
       // Update DynamoDB task status to completed
       await dynamoDBService.updateTaskCompleted(pollyTaskId);
-    }
+    };
 
     if (!audioMimeType) {
       logger.warn('Invalid audio file extension for ID3 metadata', { audioKey, audioMimeType });
@@ -109,7 +109,11 @@ async function processSNSEvent(
     }
 
     if (audioMimeType !== 'audio/mpeg') {
-      logger.warn('Skipping non-MP3 output format for ID3 metadata', { audioMimeType, audioKey, pollyTaskId });
+      logger.warn('Skipping non-MP3 output format for ID3 metadata', {
+        audioMimeType,
+        audioKey,
+        pollyTaskId,
+      });
       await beforeReturn();
       return;
     }
@@ -127,7 +131,7 @@ async function processSNSEvent(
     // Download audio file and JSON metadata
     const [audioBuffer, jsonData] = await Promise.all([
       s3Service.downloadFile(s3Bucket, audioKey),
-      s3Service.downloadFile(s3Bucket, jsonKey)
+      s3Service.downloadFile(s3Bucket, jsonKey),
     ]);
 
     // Parse JSON metadata
@@ -138,32 +142,30 @@ async function processSNSEvent(
     const taggedAudioBuffer = await id3Processor.applyTags(audioBuffer, metadata);
 
     // Upload tagged audio back to S3, same file.
-    await s3Service.uploadFile(
-      s3Bucket,
-      audioKey,
-      taggedAudioBuffer,
-      audioMimeType
-    );
+    await s3Service.uploadFile(s3Bucket, audioKey, taggedAudioBuffer, audioMimeType);
 
-    logger.info('Successfully applied ID3 tags', { 
-      pollyTaskId, 
-      originalKey: audioKey, 
-      taggedKey: audioKey
+    logger.info('Successfully applied ID3 tags', {
+      pollyTaskId,
+      originalKey: audioKey,
+      taggedKey: audioKey,
     });
 
     // Rename the audio and JSON files to remove the .<taskId> from the filename
     await beforeReturn();
   } catch (error) {
-    logger.error('Error processing SNS event record', { 
-      recordId: record.Sns.MessageId, 
-      error 
+    logger.error('Error processing SNS event record', {
+      recordId: record.Sns.MessageId,
+      error,
     });
-    
+
     // Update DynamoDB task status to failed if we have a taskId
     if (pollyTaskId) {
-      await dynamoDBService.updateTaskFailed(pollyTaskId, error instanceof Error ? error.message : 'Unknown error');
+      await dynamoDBService.updateTaskFailed(
+        pollyTaskId,
+        error instanceof Error ? error.message : 'Unknown error'
+      );
     }
-    
+
     throw error;
   }
 }

@@ -1,14 +1,20 @@
 import { ID3Metadata } from '../services/id3TagProcessor';
-import { StartSpeechSynthesisTaskCommand, VoiceId, LanguageCode, Engine, TextType } from "@aws-sdk/client-polly";
+import {
+  StartSpeechSynthesisTaskCommand,
+  VoiceId,
+  LanguageCode,
+  Engine,
+  TextType,
+} from '@aws-sdk/client-polly';
 import { getFactory } from '../services/factory';
-import { 
-  fileNameToPollyFormat, 
-  textToTextType, 
-  getDefaultVoiceId, 
-  getDefaultLanguageCode, 
+import {
+  fileNameToPollyFormat,
+  textToTextType,
+  getDefaultVoiceId,
+  getDefaultLanguageCode,
   getDefaultEngine,
-  getBucketName, 
-  getSnsTopicArn 
+  getBucketName,
+  getSnsTopicArn,
 } from '../utils';
 
 /**
@@ -31,7 +37,7 @@ type HandlerEvent = {
   textType?: TextType;
   override?: boolean;
   id3?: ID3Metadata;
-}
+};
 
 type HandlerResponse = {
   statusCode: number;
@@ -40,7 +46,7 @@ type HandlerResponse = {
   s3Location?: string;
   taskStatus?: string;
   error?: string;
-}
+};
 
 /**
  * This function is used to synthesize speech and upload the result to S3.
@@ -98,7 +104,7 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
         message: `File already exists: ${key}`,
         s3Location: `s3://${bucketName}/${key}`,
       };
-    };
+    }
   }
 
   try {
@@ -114,7 +120,7 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
       TextType: textToTextType(text, textType),
       SnsTopicArn: snsTopicArn,
       OutputS3BucketName: bucketName,
-      OutputS3KeyPrefix: keyPrefix
+      OutputS3KeyPrefix: keyPrefix,
     });
 
     const response = await pollyClient.send(synthesizeSpeechCommand);
@@ -125,10 +131,15 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
     // Create task record in DynamoDB
     await dynamoDBService.createTask(taskId!, event);
 
-    console.log("Error synthesizing speech or uploading to S3:", taskId3Key, taskKeyPrefix);
+    console.log('Error synthesizing speech or uploading to S3:', taskId3Key, taskKeyPrefix);
     // upload JSON file to S3 with the object inside id3 if it exists
     if (id3) {
-      await s3Service.uploadFile(bucketName!, taskId3Key, Buffer.from(JSON.stringify(id3)), 'application/json');
+      await s3Service.uploadFile(
+        bucketName!,
+        taskId3Key,
+        Buffer.from(JSON.stringify(id3)),
+        'application/json'
+      );
     }
     return {
       statusCode: 200,
@@ -138,7 +149,7 @@ export const handler = async (event: HandlerEvent): Promise<HandlerResponse> => 
       taskStatus: response.SynthesisTask?.TaskStatus,
     };
   } catch (error) {
-    console.error("Error synthesizing speech or uploading to S3:", error);
+    console.error('Error synthesizing speech or uploading to S3:', error);
     throw error;
   }
 };
