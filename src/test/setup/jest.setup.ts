@@ -1,5 +1,4 @@
 // Global Jest setup
-import '@testing-library/jest-dom';
 
 // Mock console methods in tests to reduce noise
 const originalConsole = { ...console };
