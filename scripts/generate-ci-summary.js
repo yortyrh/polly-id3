@@ -34,14 +34,12 @@ async function generateCISummary() {
     // Check for build artifacts
     summary.ci.buildStatus = {
       hasServerless: fs.existsSync('.serverless'),
-      hasDist: fs.existsSync('dist'),
       hasPackageLock: fs.existsSync('package-lock.json'),
     };
 
     // Check for test artifacts
     summary.ci.testStatus = {
       hasCoverage: fs.existsSync('coverage'),
-      hasTestResults: fs.existsSync('test-results'),
     };
 
     // Generate markdown summary
@@ -101,12 +99,10 @@ ${quality >= 80 ? '✅ **Excellent quality!**' : quality >= 60 ? '⚠️ **Good 
 
 ## 🏗️ Build Status
 ${build.hasServerless ? '✅' : '❌'} Serverless artifacts
-${build.hasDist ? '✅' : '❌'} Distribution files
 ${build.hasPackageLock ? '✅' : '❌'} Package lock file
 
 ## 🧪 Test Status
 ${tests.hasCoverage ? '✅' : '❌'} Coverage reports
-${tests.hasTestResults ? '✅' : '❌'} Test results
 
 ## 📊 Summary
 ${
