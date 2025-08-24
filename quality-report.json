@@ -1,0 +1,57 @@
+{
+  "timestamp": "2025-08-24T19:42:01.415Z",
+  "project": "polly-id3",
+  "version": "1.0.0",
+  "quality": {
+    "coverage": {
+      "lines": {
+        "total": 383,
+        "covered": 354,
+        "skipped": 0,
+        "pct": 92.42
+      },
+      "statements": {
+        "total": 460,
+        "covered": 419,
+        "skipped": 0,
+        "pct": 91.08
+      },
+      "functions": {
+        "total": 82,
+        "covered": 69,
+        "skipped": 0,
+        "pct": 84.14
+      },
+      "branches": {
+        "total": 152,
+        "covered": 127,
+        "skipped": 0,
+        "pct": 83.55
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "dependencies": {
+      "total": 23,
+      "production": 7,
+      "development": 16
+    },
+    "typescript": {
+      "status": "success",
+      "errors": 0
+    },
+    "linting": {
+      "status": "success",
+      "errors": 0
+    },
+    "formatting": {
+      "status": "success",
+      "errors": 0
+    },
+    "overallScore": 96.949375
+  }
+}

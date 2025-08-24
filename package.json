@@ -10,6 +10,7 @@
     "format:fix": "prettier --write src/**/*.ts",
     "build": "tsc --noEmit",
     "package": "serverless package --stage $STAGE",
+    "package:local": "env-cmd -f .env.local serverless package --stage $STAGE",
     "quality:report": "node scripts/generate-quality-report.js",
     "ci:summary": "node scripts/generate-ci-summary.js",
     "deploy:local": "node --env-file=.env.local scripts/deploy.js",

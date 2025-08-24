@@ -8,8 +8,6 @@ Add these badges to your README.md to show the current status of your project:
 [![CI](https://github.com/{owner}/{repo}/workflows/CI/badge.svg)](https://github.com/{owner}/{repo}/actions?query=workflow%3ACI)
 [![Test Coverage](https://codecov.io/gh/{owner}/{repo}/branch/main/graph/badge.svg)](https://codecov.io/gh/{owner}/{repo})
 [![Security Scan](https://github.com/{owner}/{repo}/workflows/Security%20Audit/badge.svg)](https://github.com/{owner}/{repo}/actions?query=workflow%3A%22Security+Audit%22)
-[![Deploy Staging](https://github.com/{owner}/{repo}/workflows/Deploy%20to%20Staging/badge.svg)](https://github.com/{owner}/{repo}/actions?query=workflow%3A%22Deploy+to+Staging%22)
-[![Deploy Production](https://github.com/{owner}/{repo}/workflows/Deploy%20to%20Production/badge.svg)](https://github.com/{owner}/{repo}/actions?query=workflow%3A%22Deploy+to+Production%22)
 ```
 
 ## Code Quality
