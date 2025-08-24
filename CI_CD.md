@@ -142,8 +142,6 @@ npm run quality:report
 # Generate CI summary
 npm run ci:summary
 
-# Analyze bundle size
-npm run bundle:analyze
 ```
 
 ## Coverage Requirements
